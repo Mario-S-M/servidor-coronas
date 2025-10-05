@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id               String      @id
+  nombre           String      @db.VarChar(100)
+  precioMenudeo    Decimal     @db.Decimal(10, 2)
+  precioMayoreo    Decimal     @db.Decimal(10, 2)
+  precioProduccion Decimal     @db.Decimal(10, 2)
+  categoria        String      @db.VarChar(50)
+  activo           Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  saleItems        SaleItem[]
+
+  @@map("products")
+}
+
+model Sale {
+  id           String     @id @default(uuid())
+  ticketNumber String     @unique @db.VarChar(20)
+  type         SaleType
+  total        Decimal    @db.Decimal(10, 2)
+  totalItems   Int
+  customerName String?    @db.VarChar(100)
+  customerPhone String?   @db.VarChar(20)
+  customerId   String?    @map("customer_id")
+  createdAt    DateTime   @default(now())
+  items        SaleItem[]
+  customer     Customer?  @relation(fields: [customerId], references: [id])
+
+  @@map("sales")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  nombre    String   @db.VarChar(100)
+  telefono  String   @db.VarChar(20)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+
+  @@unique([telefono])
+  @@map("customers")
+}
+
+model SaleItem {
+  id          String   @id @default(uuid())
+  saleId      String   @map("sale_id")
+  productId   String   @map("product_id")
+  productName String   @db.VarChar(100)
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
+
+model CashCut {
+  id               String   @id @default(uuid())
+  totalMenudeo     Decimal  @db.Decimal(10, 2)
+  totalMayoreo     Decimal  @db.Decimal(10, 2)
+  totalGeneral     Decimal  @db.Decimal(10, 2)
+  ventasMenudeo    Int
+  ventasMayoreo    Int
+  totalVentas      Int
+  gananciaEstimada Decimal  @db.Decimal(10, 2)
+  fechaCorte       DateTime @default(now())
+  fechaInicio      DateTime @db.Date
+  fechaFin         DateTime @db.Date
+
+  @@map("cash_cuts")
+}
+
+enum SaleType {
+  menudeo
+  mayoreo
+
+  @@map("sales_type_enum")
+}
+

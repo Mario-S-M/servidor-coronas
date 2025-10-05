@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: coronas_postgres
+    environment:
+      POSTGRES_DB: coronas_db
+      POSTGRES_USER: coronas_user
+      POSTGRES_PASSWORD: coronas_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - coronas_network
+
+  adminer:
+    image: adminer
+    container_name: coronas_adminer
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    networks:
+      - coronas_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  coronas_network:
+    driver: bridge
