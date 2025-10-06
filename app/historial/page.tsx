@@ -385,97 +385,140 @@ export default function HistorialPage() {
         )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="sr-only">
               <DialogTitle>Detalle del Ticket</DialogTitle>
             </DialogHeader>
             {selectedSale && (
-              <div className="space-y-4">
-                <div className="text-center border-b pb-4">
-                  <h3 className="text-xl font-bold">Coronas PEKKA</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Ticket {selectedSale.ticketNumber}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(selectedSale.createdAt).toLocaleDateString(
-                      "es-MX",
-                      {
+              <div className="space-y-0">
+                {/* Header formal */}
+                <div className="text-center border-b bg-black dark:bg-white text-white dark:text-black pb-3 sm:pb-4 p-3 sm:p-6 -mx-6 -mt-6 mb-4">
+                  <h3 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">
+                    TICKET DE VENTA
+                  </h3>
+                  <div className="text-xs sm:text-sm">
+                    <p className="font-semibold text-sm sm:text-base">Coronas PEKKA</p>
+                    <p className="text-xs mt-1 text-gray-300 dark:text-gray-700">
+                      Artículos Funerarios
+                    </p>
+                  </div>
+                </div>
+
+                {/* Información del ticket */}
+                <div className="mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-dashed border-black dark:border-white">
+                  <div className="flex justify-between text-xs text-black dark:text-white mb-1">
+                    <span className="font-semibold">Ticket:</span>
+                    <span className="font-mono font-bold">{selectedSale.ticketNumber}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-black dark:text-white mb-1">
+                    <span className="font-semibold">Fecha:</span>
+                    <span className="font-medium text-right ml-2">
+                      {new Date(selectedSale.createdAt).toLocaleDateString("es-MX", {
+                        weekday: "long",
                         year: "numeric",
                         month: "long",
                         day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-black dark:text-white">
+                    <span className="font-semibold">Hora:</span>
+                    <span className="font-mono font-medium">
+                      {new Date(selectedSale.createdAt).toLocaleTimeString("es-MX", {
                         hour: "2-digit",
                         minute: "2-digit",
-                      }
-                    )}
-                  </p>
+                        second: "2-digit",
+                      })}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Información del cliente */}
+                {/* Información del cliente (si existe) */}
                 {(selectedSale.customerName || selectedSale.customerPhone) && (
-                  <div className="border-b pb-4 space-y-2">
-                    <h4 className="font-semibold text-sm">Cliente:</h4>
+                  <div className="mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-dashed border-black dark:border-white">
+                    <h3 className="text-xs sm:text-sm font-bold text-black dark:text-white mb-2">
+                      Información del Cliente
+                    </h3>
                     {selectedSale.customerName && (
-                      <p className="text-sm">{selectedSale.customerName}</p>
+                      <div className="flex items-center gap-2 text-xs text-black dark:text-white mb-1">
+                        <span className="font-semibold">Nombre:</span>
+                        <span className="font-medium break-all">{selectedSale.customerName}</span>
+                      </div>
                     )}
                     {selectedSale.customerPhone && (
-                      <p className="text-sm text-muted-foreground">
-                        {selectedSale.customerPhone}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-black dark:text-white">
+                        <span className="font-semibold">Teléfono:</span>
+                        <span className="font-medium">{selectedSale.customerPhone}</span>
+                      </div>
                     )}
                   </div>
                 )}
 
-                <div className="space-y-2">
+                {/* Tipo de venta */}
+                <div className="mb-3 pb-2 border-b border-dashed border-black dark:border-white">
                   <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-black dark:text-white">Tipo de Venta:</span>
                     <Badge
-                      variant={
-                        selectedSale.type === "menudeo"
-                          ? "default"
-                          : "secondary"
-                      }
+                      variant={selectedSale.type === "menudeo" ? "default" : "secondary"}
+                      className="text-xs"
                     >
                       {selectedSale.type.toUpperCase()}
                     </Badge>
                   </div>
-
-                  {selectedSale.items && selectedSale.items.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-sm">Productos:</h4>
-                      <div className="space-y-2">
-                        {selectedSale.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex justify-between text-sm border-b pb-2"
-                          >
-                            <div className="flex-1">
-                              <p className="font-medium">{item.productName}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {item.quantity} x ${item.unitPrice.toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="font-semibold">
-                              ${item.totalPrice.toFixed(2)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                <div className="border-t pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Total de artículos:
-                    </span>
-                    <span className="font-medium">
-                      {selectedSale.totalItems}
+                {/* Desglose de productos */}
+                {selectedSale.items && selectedSale.items.length > 0 && (
+                  <div className="mb-3 sm:mb-4">
+                    <h3 className="text-xs sm:text-sm font-bold text-black dark:text-white mb-2 sm:mb-3 text-center uppercase tracking-wide border-b border-black dark:border-white pb-1">
+                      Detalle de la Compra
+                    </h3>
+
+                    <div className="space-y-2 sm:space-y-3 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto pr-1">
+                      {selectedSale.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="border-b border-black dark:border-white border-dashed pb-2"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <p className="text-xs sm:text-sm font-bold text-black dark:text-white leading-tight break-words">
+                                {item.productName}
+                              </p>
+                              <div className="flex justify-between items-center mt-1">
+                                <p className="text-xs text-black dark:text-white font-medium">
+                                  {item.quantity} × ${item.unitPrice.toFixed(2)}
+                                </p>
+                                <p className="text-xs sm:text-sm font-bold text-black dark:text-white">
+                                  ${item.totalPrice.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resumen */}
+                <div className="border-t-2 border-black dark:border-white pt-2 sm:pt-3 mb-3 sm:mb-4">
+                  <div className="flex justify-between text-xs sm:text-sm text-black dark:text-white mb-2">
+                    <span className="font-semibold">Cantidad de artículos:</span>
+                    <span className="font-bold">{selectedSale.totalItems}</span>
+                  </div>
+                  <div className="flex justify-between text-sm sm:text-lg font-bold text-black dark:text-white bg-gray-100 dark:bg-gray-900 p-2 rounded">
+                    <span className="text-xs sm:text-base">TOTAL PAGADO:</span>
+                    <span className="text-sm sm:text-lg">
+                      ${selectedSale.total.toFixed(2)} MXN
                     </span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total:</span>
-                    <span>${selectedSale.total.toFixed(2)}</span>
-                  </div>
+                </div>
+
+                {/* Pie del ticket */}
+                <div className="text-center text-xs text-black dark:text-white border-t border-dashed border-black dark:border-white pt-2 sm:pt-3">
+                  <p className="font-semibold">Gracias por su preferencia</p>
+                  <p className="mt-1 font-medium">¡Que tenga un buen día!</p>
                 </div>
               </div>
             )}

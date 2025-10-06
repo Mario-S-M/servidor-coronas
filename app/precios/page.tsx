@@ -9,6 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Settings, Save, Plus, Pencil, Trash2, FolderPlus } from "lucide-react";
 
@@ -362,26 +369,28 @@ export default function PreciosPage() {
 
   if (loading) {
     return (
-      <div className="p-3 sm:p-4">
+      <div className="p-3 sm:p-4 bg-white dark:bg-black min-h-screen">
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-sm sm:text-base text-gray-600">Cargando productos...</p>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            Cargando productos...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen p-3 sm:p-4 md:p-6 lg:p-8 bg-white dark:bg-black">
       <div className="max-w-6xl mx-auto">
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-gray-700" />
+              <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-black dark:text-white" />
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
+                <h1 className="text-lg sm:text-2xl font-bold text-black dark:text-white">
                   Editar Precios
                 </h1>
-                <p className="text-xs sm:text-base text-gray-600">
+                <p className="text-xs sm:text-base text-gray-600 dark:text-gray-400">
                   Actualiza los precios de todos los productos
                 </p>
               </div>
@@ -391,7 +400,7 @@ export default function PreciosPage() {
                 onClick={() => setIsCategoryDialogOpen(true)}
                 variant="outline"
                 size="sm"
-                className="flex items-center justify-center gap-2 text-xs sm:text-sm"
+                className="flex items-center justify-center gap-2 text-xs sm:text-sm border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900"
               >
                 <FolderPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Gestionar Categorías</span>
@@ -401,7 +410,7 @@ export default function PreciosPage() {
                 onClick={() => setIsAddDialogOpen(true)}
                 variant="outline"
                 size="sm"
-                className="flex items-center justify-center gap-2 text-xs sm:text-sm"
+                className="flex items-center justify-center gap-2 text-xs sm:text-sm border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900"
               >
                 <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Agregar Producto</span>
@@ -411,7 +420,7 @@ export default function PreciosPage() {
                 onClick={saveAllPrices}
                 disabled={saving}
                 size="sm"
-                className="flex items-center justify-center gap-2 text-xs sm:text-sm"
+                className="flex items-center justify-center gap-2 text-xs sm:text-sm bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
               >
                 <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {saving ? "Guardando..." : "Guardar"}
@@ -420,11 +429,15 @@ export default function PreciosPage() {
           </div>
         </div>
 
-        <div className="space-y-3 sm:space-y-6">{Object.entries(productsByCategory).map(
+        <div className="space-y-3 sm:space-y-6">
+          {Object.entries(productsByCategory).map(
             ([categoria, categoryProducts]) => (
-              <Card key={categoria}>
+              <Card
+                key={categoria}
+                className="border-black dark:border-white bg-white dark:bg-black"
+              >
                 <CardHeader className="pb-3 sm:pb-6">
-                  <CardTitle className="text-base sm:text-lg">
+                  <CardTitle className="text-base sm:text-lg text-black dark:text-white">
                     {categoryTitles[categoria] || categoria}
                   </CardTitle>
                 </CardHeader>
@@ -432,20 +445,20 @@ export default function PreciosPage() {
                   <div className="overflow-x-auto -mx-2 sm:mx-0">
                     <table className="w-full min-w-[600px] sm:min-w-full">
                       <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-sm">
+                        <tr className="border-b border-black dark:border-white">
+                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-black dark:text-white text-xs sm:text-sm">
                             Producto
                           </th>
-                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-sm">
+                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-black dark:text-white text-xs sm:text-sm">
                             P. Menudeo
                           </th>
-                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-sm">
+                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-black dark:text-white text-xs sm:text-sm">
                             P. Mayoreo
                           </th>
-                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-sm">
+                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-black dark:text-white text-xs sm:text-sm">
                             P. Producción
                           </th>
-                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-sm">
+                          <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-black dark:text-white text-xs sm:text-sm">
                             Acciones
                           </th>
                         </tr>
@@ -454,16 +467,18 @@ export default function PreciosPage() {
                         {categoryProducts.map((product) => (
                           <tr
                             key={product.id}
-                            className="border-b hover:bg-gray-50"
+                            className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900"
                           >
                             <td className="py-2 px-2 sm:py-3 sm:px-4">
-                              <span className="font-medium text-gray-900 text-xs sm:text-sm">
+                              <span className="font-medium text-black dark:text-white text-xs sm:text-sm">
                                 {product.nombre}
                               </span>
                             </td>
                             <td className="py-2 px-2 sm:py-3 sm:px-4">
                               <div className="flex items-center gap-1 sm:gap-2">
-                                <span className="text-gray-600 text-xs sm:text-sm">$</span>
+                                <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                                  $
+                                </span>
                                 <input
                                   type="number"
                                   step="0.01"
@@ -476,13 +491,15 @@ export default function PreciosPage() {
                                       e.target.value
                                     )
                                   }
-                                  className="w-16 sm:w-24 px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-xs sm:text-sm"
+                                  className="w-16 sm:w-24 px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-xs sm:text-sm bg-white dark:bg-black text-black dark:text-white"
                                 />
                               </div>
                             </td>
                             <td className="py-2 px-2 sm:py-3 sm:px-4">
                               <div className="flex items-center gap-1 sm:gap-2">
-                                <span className="text-gray-600 text-xs sm:text-sm">$</span>
+                                <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                                  $
+                                </span>
                                 <input
                                   type="number"
                                   step="0.01"
@@ -495,13 +512,15 @@ export default function PreciosPage() {
                                       e.target.value
                                     )
                                   }
-                                  className="w-16 sm:w-24 px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-xs sm:text-sm"
+                                  className="w-16 sm:w-24 px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-xs sm:text-sm bg-white dark:bg-black text-black dark:text-white"
                                 />
                               </div>
                             </td>
                             <td className="py-2 px-2 sm:py-3 sm:px-4">
                               <div className="flex items-center gap-1 sm:gap-2">
-                                <span className="text-gray-600 text-xs sm:text-sm">$</span>
+                                <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                                  $
+                                </span>
                                 <input
                                   type="number"
                                   step="0.01"
@@ -514,7 +533,7 @@ export default function PreciosPage() {
                                       e.target.value
                                     )
                                   }
-                                  className="w-16 sm:w-24 px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-xs sm:text-sm"
+                                  className="w-16 sm:w-24 px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-xs sm:text-sm bg-white dark:bg-black text-black dark:text-white"
                                 />
                               </div>
                             </td>
@@ -524,15 +543,15 @@ export default function PreciosPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => openEditDialog(product)}
-                                  className="h-7 w-7 p-0 sm:h-9 sm:w-9"
+                                  className="h-7 w-7 p-0 sm:h-9 sm:w-9 border-black dark:border-white hover:bg-gray-100 dark:hover:bg-gray-900"
                                 >
-                                  <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-black dark:text-white" />
                                 </Button>
                                 <Button
                                   variant="destructive"
                                   size="sm"
                                   onClick={() => openDeleteDialog(product)}
-                                  className="h-7 w-7 p-0 sm:h-9 sm:w-9"
+                                  className="h-7 w-7 p-0 sm:h-9 sm:w-9 bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600"
                                 >
                                   <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
@@ -553,11 +572,15 @@ export default function PreciosPage() {
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">Agregar Nuevo Producto</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">
+                Agregar Nuevo Producto
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="text-xs sm:text-sm font-semibold">Nombre:</label>
+                <label className="text-xs sm:text-sm font-semibold">
+                  Nombre:
+                </label>
                 <input
                   type="text"
                   placeholder="ej: Corona de Ramo"
@@ -570,27 +593,35 @@ export default function PreciosPage() {
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-semibold">Categoría:</label>
-                <select
+                <label className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+                  Categoría:
+                </label>
+                <Select
                   value={newProduct.categoria}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setNewProduct({
                       ...newProduct,
-                      categoria: e.target.value,
+                      categoria: value,
                     })
                   }
-                  className="w-full mt-1 px-2 py-2 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm sm:text-base"
                 >
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.nombre}>
-                      {cat.nombre}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full mt-1 text-sm sm:text-base">
+                    <SelectValue placeholder="Seleccionar categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.nombre}>
+                        {cat.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-semibold">Precio Menudeo:</label>
+                <label className="text-xs sm:text-sm font-semibold">
+                  Precio Menudeo:
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -607,7 +638,9 @@ export default function PreciosPage() {
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-semibold">Precio Mayoreo:</label>
+                <label className="text-xs sm:text-sm font-semibold">
+                  Precio Mayoreo:
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -651,7 +684,11 @@ export default function PreciosPage() {
                 >
                   Cancelar
                 </Button>
-                <Button onClick={handleAddProduct} size="sm" className="text-xs sm:text-sm">
+                <Button
+                  onClick={handleAddProduct}
+                  size="sm"
+                  className="text-xs sm:text-sm"
+                >
                   Agregar
                 </Button>
               </div>
@@ -663,12 +700,16 @@ export default function PreciosPage() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">Editar Producto</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">
+                Editar Producto
+              </DialogTitle>
             </DialogHeader>
             {selectedProduct && (
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="text-xs sm:text-sm font-semibold">ID:</label>
+                  <label className="text-xs sm:text-sm font-semibold">
+                    ID:
+                  </label>
                   <input
                     type="text"
                     value={selectedProduct.id}
@@ -678,7 +719,9 @@ export default function PreciosPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs sm:text-sm font-semibold">Nombre:</label>
+                  <label className="text-xs sm:text-sm font-semibold">
+                    Nombre:
+                  </label>
                   <input
                     type="text"
                     value={selectedProduct.nombre}
@@ -693,23 +736,29 @@ export default function PreciosPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs sm:text-sm font-semibold">Categoría:</label>
-                  <select
+                  <label className="text-xs sm:text-sm font-semibold text-black dark:text-white">
+                    Categoría:
+                  </label>
+                  <Select
                     value={selectedProduct.categoria}
-                    onChange={(e) =>
+                    onValueChange={(value) =>
                       setSelectedProduct({
                         ...selectedProduct,
-                        categoria: e.target.value,
+                        categoria: value,
                       })
                     }
-                    className="w-full mt-1 px-2 py-2 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm sm:text-base"
                   >
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.nombre}>
-                        {cat.nombre}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full mt-1 text-sm sm:text-base">
+                      <SelectValue placeholder="Seleccionar categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.nombre}>
+                          {cat.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -778,7 +827,11 @@ export default function PreciosPage() {
                   >
                     Cancelar
                   </Button>
-                  <Button onClick={handleEditProduct} size="sm" className="text-xs sm:text-sm">
+                  <Button
+                    onClick={handleEditProduct}
+                    size="sm"
+                    className="text-xs sm:text-sm"
+                  >
                     Guardar
                   </Button>
                 </div>
@@ -791,7 +844,9 @@ export default function PreciosPage() {
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent className="max-w-[95vw] sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">Confirmar Eliminación</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">
+                Confirmar Eliminación
+              </DialogTitle>
             </DialogHeader>
             {selectedProduct && (
               <div className="space-y-3 sm:space-y-4">
@@ -799,7 +854,9 @@ export default function PreciosPage() {
                   ¿Estás seguro de que deseas eliminar este producto?
                 </p>
                 <div className="border p-3 sm:p-4 rounded space-y-2">
-                  <p className="font-semibold text-sm sm:text-base">{selectedProduct.nombre}</p>
+                  <p className="font-semibold text-sm sm:text-base">
+                    {selectedProduct.nombre}
+                  </p>
                   <p className="text-xs sm:text-sm text-muted-foreground">
                     ID: {selectedProduct.id}
                   </p>
@@ -819,7 +876,12 @@ export default function PreciosPage() {
                   >
                     Cancelar
                   </Button>
-                  <Button variant="destructive" onClick={handleDeleteProduct} size="sm" className="text-xs sm:text-sm">
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteProduct}
+                    size="sm"
+                    className="text-xs sm:text-sm"
+                  >
                     Eliminar
                   </Button>
                 </div>
@@ -835,11 +897,15 @@ export default function PreciosPage() {
         >
           <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">Gestionar Categorías</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">
+                Gestionar Categorías
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-3 sm:space-y-4">
               <div className="space-y-2">
-                <h3 className="font-semibold text-sm sm:text-base">Agregar Nueva Categoría</h3>
+                <h3 className="font-semibold text-sm sm:text-base">
+                  Agregar Nueva Categoría
+                </h3>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
@@ -862,7 +928,11 @@ export default function PreciosPage() {
                     }
                     className="w-full sm:w-24 px-2 py-2 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm sm:text-base"
                   />
-                  <Button onClick={handleAddCategory} size="sm" className="text-xs sm:text-sm">
+                  <Button
+                    onClick={handleAddCategory}
+                    size="sm"
+                    className="text-xs sm:text-sm"
+                  >
                     <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     Agregar
                   </Button>
@@ -870,7 +940,9 @@ export default function PreciosPage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold text-sm sm:text-base">Categorías Existentes</h3>
+                <h3 className="font-semibold text-sm sm:text-base">
+                  Categorías Existentes
+                </h3>
                 <div className="border rounded-lg overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[400px]">
@@ -940,14 +1012,20 @@ export default function PreciosPage() {
                               </>
                             ) : (
                               <>
-                                <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">{category.nombre}</td>
-                                <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">{category.orden}</td>
+                                <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">
+                                  {category.nombre}
+                                </td>
+                                <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm">
+                                  {category.orden}
+                                </td>
                                 <td className="py-2 px-2 sm:py-3 sm:px-4">
                                   <div className="flex gap-1 sm:gap-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => setEditingCategory(category)}
+                                      onClick={() =>
+                                        setEditingCategory(category)
+                                      }
                                       className="h-7 w-7 p-0 sm:h-8 sm:w-8"
                                     >
                                       <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />

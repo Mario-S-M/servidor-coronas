@@ -116,25 +116,27 @@ export default function CorteCajaPage() {
 
   if (loading) {
     return (
-      <div className="p-4 lg:p-8">
+      <div className="p-4 lg:p-8 bg-white dark:bg-black min-h-screen">
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-gray-600">Cargando...</p>
+          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 lg:p-8">
+    <div className="p-4 lg:p-8 bg-white dark:bg-black min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-3">
-            <Calculator className="h-8 w-8 text-gray-700" />
+            <Calculator className="h-8 w-8 text-black dark:text-white" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-black dark:text-white">
                 Corte de Caja
               </h1>
-              <p className="text-gray-600">Resumen de ventas por día</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Resumen de ventas por día
+              </p>
             </div>
           </div>
         </div>
@@ -142,9 +144,11 @@ export default function CorteCajaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Selector de fecha */}
           <div className="lg:col-span-1">
-            <Card>
+            <Card className="border-black dark:border-white bg-white dark:bg-black">
               <CardHeader>
-                <CardTitle>Seleccionar Fecha</CardTitle>
+                <CardTitle className="text-black dark:text-white">
+                  Seleccionar Fecha
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <Popover>
@@ -152,8 +156,8 @@ export default function CorteCajaPage() {
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
+                        "w-full justify-start text-left font-normal border-black dark:border-white bg-white dark:bg-black text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900",
+                        !date && "text-gray-500 dark:text-gray-400"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -164,29 +168,34 @@ export default function CorteCajaPage() {
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0 border-black dark:border-white bg-white dark:bg-black">
                     <Calendar
                       mode="single"
                       selected={date}
                       onSelect={(newDate) => newDate && setDate(newDate)}
                       initialFocus
+                      className="text-black dark:text-white"
                     />
                   </PopoverContent>
                 </Popover>
 
                 <div className="mt-6 space-y-4">
-                  <Card>
+                  <Card className="border-black dark:border-white bg-white dark:bg-black">
                     <CardContent className="p-4">
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Ventas Menudeo:</span>
-                          <span className="font-semibold">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Ventas Menudeo:
+                          </span>
+                          <span className="font-semibold text-black dark:text-white">
                             {getVentasMenudeo()}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Total Menudeo:</span>
-                          <span className="font-semibold">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Total Menudeo:
+                          </span>
+                          <span className="font-semibold text-black dark:text-white">
                             ${getTotalMenudeo().toFixed(2)}
                           </span>
                         </div>
@@ -194,18 +203,22 @@ export default function CorteCajaPage() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="border-black dark:border-white bg-white dark:bg-black">
                     <CardContent className="p-4">
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Ventas Mayoreo:</span>
-                          <span className="font-semibold">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Ventas Mayoreo:
+                          </span>
+                          <span className="font-semibold text-black dark:text-white">
                             {getVentasMayoreo()}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Total Mayoreo:</span>
-                          <span className="font-semibold">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Total Mayoreo:
+                          </span>
+                          <span className="font-semibold text-black dark:text-white">
                             ${getTotalMayoreo().toFixed(2)}
                           </span>
                         </div>
@@ -213,20 +226,22 @@ export default function CorteCajaPage() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="border-black dark:border-white bg-white dark:bg-black">
                     <CardContent className="p-4">
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-black dark:text-white">
                             Total General:
                           </span>
-                          <span className="font-bold text-lg">
+                          <span className="font-bold text-lg text-black dark:text-white">
                             ${getTotalGeneral().toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Total Ventas:</span>
-                          <span className="font-semibold">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Total Ventas:
+                          </span>
+                          <span className="font-semibold text-black dark:text-white">
                             {filteredSales.length}
                           </span>
                         </div>
@@ -240,9 +255,9 @@ export default function CorteCajaPage() {
 
           {/* Lista de ventas del día */}
           <div className="lg:col-span-2">
-            <Card>
+            <Card className="border-black dark:border-white bg-white dark:bg-black">
               <CardHeader>
-                <CardTitle>
+                <CardTitle className="text-black dark:text-white">
                   Ventas del{" "}
                   {format(date, "d 'de' MMMM 'de' yyyy", { locale: es })}
                 </CardTitle>
@@ -250,17 +265,22 @@ export default function CorteCajaPage() {
               <CardContent>
                 {filteredSales.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-600">No hay ventas para este día</p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      No hay ventas para este día
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {filteredSales.map((sale) => (
-                      <Card key={sale.id}>
+                      <Card
+                        key={sale.id}
+                        className="border-black dark:border-white bg-white dark:bg-black"
+                      >
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
-                                <span className="font-semibold">
+                                <span className="font-semibold text-black dark:text-white">
                                   {sale.ticketNumber}
                                 </span>
                                 <Badge
@@ -269,15 +289,16 @@ export default function CorteCajaPage() {
                                       ? "default"
                                       : "secondary"
                                   }
+                                  className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white"
                                 >
                                   {sale.type.toUpperCase()}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
                                 {sale.totalItems} artículo
                                 {sale.totalItems !== 1 ? "s" : ""}
                               </p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-500">
                                 {new Date(sale.createdAt).toLocaleTimeString(
                                   "es-MX",
                                   {
@@ -288,7 +309,7 @@ export default function CorteCajaPage() {
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-xl font-bold">
+                              <p className="text-xl font-bold text-black dark:text-white">
                                 ${sale.total.toFixed(2)}
                               </p>
                             </div>

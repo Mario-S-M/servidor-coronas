@@ -24,14 +24,9 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-> 📖 **Raspberry Pi**: Ver [RASPBERRY-PI-GUIDE.md](./RASPBERRY-PI-GUIDE.md) para guía completa
-
 ### Manual
 
 ```powershell
-# Verificar requisitos
-.\check-setup.bat
-
 # Levantar servicios
 docker-compose up -d --build
 
@@ -110,13 +105,6 @@ docker-compose exec app npx prisma migrate deploy
 # Seed
 docker-compose exec app npm run db:seed
 ```
-
-## 📖 Documentación
-
-- [DOCKER-DEPLOY.md](./DOCKER-DEPLOY.md) - Guía completa de Docker
-- [QUICK-START.md](./QUICK-START.md) - Referencia rápida
-- [SECURITY-PRODUCTION.md](./SECURITY-PRODUCTION.md) - Seguridad en producción
-- [DOCKER-SETUP-SUMMARY.md](./DOCKER-SETUP-SUMMARY.md) - Resumen de configuración
 
 ## 🏗️ Arquitectura
 
