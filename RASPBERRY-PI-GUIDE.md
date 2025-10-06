@@ -137,7 +137,7 @@ docker-compose logs -f app
 
 Este error ocurre cuando intentas hacer migraciones en una base de datos que ya tiene datos de un despliegue anterior.
 
-**Solución 1 - El script ya lo maneja automáticamente**: 
+**Solución 1 - El script ya lo maneja automáticamente**:
 El `docker-entrypoint.sh` ahora detecta este error y sincroniza automáticamente.
 
 **Solución 2 - Limpiar y empezar desde cero** (¡Esto borrará todos los datos!):
