@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Copiar archivos de dependencias
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Stage 2: Build de la aplicación
 FROM base AS builder

@@ -73,6 +73,7 @@ docker-compose ps
 > 📖 **Raspberry Pi**: Lee [LEEME-LINUX.md](./LEEME-LINUX.md) o [RASPBERRY-PI-GUIDE.md](./RASPBERRY-PI-GUIDE.md)
 
 ### Una línea (Todos los sistemas)
+
 ```bash
 docker-compose up -d --build
 ```
@@ -254,14 +255,14 @@ docker-compose ps
 
 ## 📚 Documentación
 
-| Archivo | Para qué |
-|---------|----------|
-| `README.md` | Visión general |
-| `QUICK-START.md` | Comandos rápidos |
-| `DOCKER-DEPLOY.md` | Guía completa Docker |
-| `DEPLOYMENT-GUIDE.md` | Despliegue paso a paso |
+| Archivo                  | Para qué                |
+| ------------------------ | ----------------------- |
+| `README.md`              | Visión general          |
+| `QUICK-START.md`         | Comandos rápidos        |
+| `DOCKER-DEPLOY.md`       | Guía completa Docker    |
+| `DEPLOYMENT-GUIDE.md`    | Despliegue paso a paso  |
 | `SECURITY-PRODUCTION.md` | Seguridad en producción |
-| `SETUP-COMPLETE.md` | Este resumen |
+| `SETUP-COMPLETE.md`      | Este resumen            |
 
 ## 🎉 ¡Listo!
 

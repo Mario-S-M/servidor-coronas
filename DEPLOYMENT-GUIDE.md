@@ -20,6 +20,7 @@
 ```
 
 Este script verifica:
+
 - ✅ Docker instalado
 - ✅ Docker Compose disponible
 - ✅ Docker corriendo
@@ -29,11 +30,13 @@ Este script verifica:
 ### 2. Desplegar la Aplicación
 
 **Opción A - Script Automático (Recomendado):**
+
 ```powershell
 .\deploy.bat
 ```
 
 **Opción B - Manual:**
+
 ```powershell
 # Construir y levantar
 docker-compose up -d --build
@@ -279,7 +282,7 @@ app:
   deploy:
     resources:
       limits:
-        cpus: '2'
+        cpus: "2"
         memory: 2G
 ```
 
@@ -328,6 +331,7 @@ Ver [SECURITY-PRODUCTION.md](./SECURITY-PRODUCTION.md) para más detalles.
 ## ✅ Checklist de Despliegue
 
 ### Desarrollo Local
+
 - [ ] Docker Desktop instalado y corriendo
 - [ ] Puertos 3001, 5432, 8081 libres
 - [ ] Ejecutar `.\check-setup.bat`
@@ -336,6 +340,7 @@ Ver [SECURITY-PRODUCTION.md](./SECURITY-PRODUCTION.md) para más detalles.
 - [ ] Poblar datos con seed (opcional)
 
 ### Servidor de Producción
+
 - [ ] Servidor con Docker instalado
 - [ ] Credenciales de DB cambiadas
 - [ ] Variables de entorno configuradas

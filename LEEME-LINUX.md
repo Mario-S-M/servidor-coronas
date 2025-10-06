@@ -14,6 +14,7 @@ chmod +x install-docker.sh
 ```
 
 Después, cierra sesión y vuelve a entrar, o ejecuta:
+
 ```bash
 newgrp docker
 ```
@@ -31,6 +32,7 @@ chmod +x deploy.sh
 - **Desde otra PC**: http://[IP-RASPBERRY]:3001
 
 Para ver la IP:
+
 ```bash
 hostname -I
 ```
@@ -74,16 +76,19 @@ cat RASPBERRY-PI-GUIDE.md
 ## 🔧 Troubleshooting Común
 
 ### "Permission denied"
+
 ```bash
 chmod +x deploy.sh
 ```
 
 ### "Docker no está corriendo"
+
 ```bash
 sudo systemctl start docker
 ```
 
 ### "comando no encontrado" al ejecutar .bat
+
 ```bash
 # En Linux usa .sh, NO .bat
 ./deploy.sh  # ✅ Correcto

@@ -31,11 +31,13 @@ sudo apt-get install docker-compose
 ## 🎯 Despliegue Rápido
 
 ### Paso 1: Dar permisos de ejecución
+
 ```bash
 chmod +x deploy.sh
 ```
 
 ### Paso 2: Ejecutar
+
 ```bash
 ./deploy.sh
 ```
@@ -68,10 +70,12 @@ Después de ejecutar `./deploy.sh`:
 - **PostgreSQL**: localhost:5432
 
 O desde otra máquina en la red local:
+
 - **Aplicación**: http://[IP-RASPBERRY]:3001
 - **Adminer**: http://[IP-RASPBERRY]:8081
 
 ### Obtener IP de la Raspberry Pi
+
 ```bash
 hostname -I
 # o
@@ -129,7 +133,23 @@ docker-compose logs -f app
 
 ## 🐛 Troubleshooting
 
+### Error: "ERESOLVE could not resolve" o conflictos de dependencias
+
+Este error ocurre durante el build de Docker debido a conflictos de versiones de paquetes.
+
+**Solución**: El Dockerfile ya está configurado con `--legacy-peer-deps`. Si aún así falla:
+
+```bash
+# Limpiar cache de Docker
+docker system prune -a
+
+# Rebuild desde cero
+docker-compose build --no-cache
+docker-compose up -d
+```
+
 ### Error: "permission denied"
+
 ```bash
 # Dar permisos de ejecución
 chmod +x deploy.sh
@@ -143,6 +163,7 @@ newgrp docker
 ```
 
 ### Error: "Docker no está corriendo"
+
 ```bash
 # Iniciar Docker
 sudo systemctl start docker
@@ -155,6 +176,7 @@ sudo systemctl status docker
 ```
 
 ### Error: "Puerto en uso"
+
 ```bash
 # Ver qué usa el puerto 3001
 sudo lsof -i :3001
@@ -164,12 +186,14 @@ sudo kill -9 <PID>
 ```
 
 ### Ver logs de error
+
 ```bash
 docker-compose logs app | grep -i error
 docker-compose logs postgres | grep -i error
 ```
 
 ### Reinicio completo
+
 ```bash
 # Detener y limpiar todo
 docker-compose down -v
@@ -192,10 +216,10 @@ app:
   deploy:
     resources:
       limits:
-        cpus: '2'
+        cpus: "2"
         memory: 1G
       reservations:
-        cpus: '0.5'
+        cpus: "0.5"
         memory: 512M
 ```
 
@@ -270,6 +294,7 @@ docker system df
 Los contenedores ya están configurados con `restart: unless-stopped` en docker-compose.yml, por lo que se iniciarán automáticamente después de un reinicio.
 
 Para verificar:
+
 ```bash
 # Reiniciar Raspberry Pi
 sudo reboot
@@ -312,6 +337,7 @@ docker-compose exec postgres pg_dump -U coronas_user coronas_db > backup_$(date 
 ## 🎉 ¡Listo!
 
 Tu servidor Balance Coronas está corriendo en Raspberry Pi con:
+
 - ✅ Docker + Docker Compose
 - ✅ PM2 gestionando procesos
 - ✅ PostgreSQL persistente
@@ -319,6 +345,7 @@ Tu servidor Balance Coronas está corriendo en Raspberry Pi con:
 - ✅ Logs disponibles
 
 Para cualquier problema, revisa los logs:
+
 ```bash
 docker-compose logs -f app
 ```
