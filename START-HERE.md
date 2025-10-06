@@ -57,8 +57,23 @@ Balance Coronas
 .\status.bat
 ```
 
-### Una línea
-```powershell
+### Linux / Mac / Raspberry Pi (Bash)
+
+```bash
+# 1. Dar permisos
+chmod +x deploy.sh
+
+# 2. Desplegar
+./deploy.sh
+
+# 3. Ver estado
+docker-compose ps
+```
+
+> 📖 **Raspberry Pi**: Lee [LEEME-LINUX.md](./LEEME-LINUX.md) o [RASPBERRY-PI-GUIDE.md](./RASPBERRY-PI-GUIDE.md)
+
+### Una línea (Todos los sistemas)
+```bash
 docker-compose up -d --build
 ```
 

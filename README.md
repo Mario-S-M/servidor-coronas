@@ -17,12 +17,14 @@ Sistema de punto de venta y gestión de inventario para Coronas.
 .\deploy.bat
 ```
 
-**Linux/Mac:**
+**Linux/Mac/Raspberry Pi:**
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
+
+> 📖 **Raspberry Pi**: Ver [RASPBERRY-PI-GUIDE.md](./RASPBERRY-PI-GUIDE.md) para guía completa
 
 ### Manual
 
