@@ -133,6 +133,30 @@ docker-compose logs -f app
 
 ## 🐛 Troubleshooting
 
+### Error: "P3005 - The database schema is not empty"
+
+Este error ocurre cuando intentas hacer migraciones en una base de datos que ya tiene datos de un despliegue anterior.
+
+**Solución 1 - El script ya lo maneja automáticamente**: 
+El `docker-entrypoint.sh` ahora detecta este error y sincroniza automáticamente.
+
+**Solución 2 - Limpiar y empezar desde cero** (¡Esto borrará todos los datos!):
+
+```bash
+# Detener y eliminar volúmenes
+sudo docker-compose down -v
+
+# Levantar de nuevo
+sudo docker-compose up -d --build
+```
+
+**Solución 3 - Mantener los datos existentes**:
+
+```bash
+# Solo reiniciar la app
+sudo docker-compose restart app
+```
+
 ### Error: "ERESOLVE could not resolve" o conflictos de dependencias
 
 Este error ocurre durante el build de Docker debido a conflictos de versiones de paquetes.

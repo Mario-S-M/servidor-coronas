@@ -87,6 +87,16 @@ chmod +x deploy.sh
 sudo systemctl start docker
 ```
 
+### "P3005 - Database schema is not empty"
+
+El script lo maneja automáticamente. Si persiste:
+
+```bash
+# Limpiar y reiniciar (¡borra datos!)
+chmod +x clean-db.sh
+./clean-db.sh
+```
+
 ### "comando no encontrado" al ejecutar .bat
 
 ```bash
