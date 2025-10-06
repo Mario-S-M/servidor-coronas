@@ -4,9 +4,7 @@ import { z } from "zod";
 
 const createProductSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
-  categoria: z.enum(["coronas", "cruces", "arcos"], {
-    message: "Categoría inválida",
-  }),
+  categoria: z.string().min(1, "La categoría es requerida"),
   precioMenudeo: z.number().positive("El precio debe ser mayor a 0"),
   precioMayoreo: z.number().positive("El precio debe ser mayor a 0"),
   precioProduccion: z.number().positive("El precio debe ser mayor a 0"),
@@ -44,6 +42,21 @@ export async function POST(request: Request) {
   try {
     const productData = await request.json();
     const validatedData = createProductSchema.parse(productData);
+
+    // Verificar que la categoría exista
+    const categoryExists = await prisma.category.findFirst({
+      where: {
+        nombre: validatedData.categoria,
+        activo: true,
+      },
+    });
+
+    if (!categoryExists) {
+      return NextResponse.json(
+        { error: `La categoría "${validatedData.categoria}" no existe` },
+        { status: 400 }
+      );
+    }
 
     // Generar ID base desde el nombre
     let productId = generateProductId(validatedData.nombre);

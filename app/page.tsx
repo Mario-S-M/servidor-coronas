@@ -20,6 +20,8 @@ export default function DashboardPage() {
     customerPhone,
     setCustomerName,
     setCustomerPhone,
+    getCategories,
+    getProductsByCategory,
   } = useProductStore();
 
   useEffect(() => {
@@ -39,6 +41,9 @@ export default function DashboardPage() {
     const formatted = formatPhoneNumber(value);
     setCustomerPhone(formatted);
   };
+
+  const categories = getCategories();
+
   return (
     <div className="p-4">
       <div className="mb-6">
@@ -96,33 +101,26 @@ export default function DashboardPage() {
           </Card>
 
           <Accordion type="single" collapsible className="w-full">
-            <ProductSection value="coronas" title="Coronas">
-              <ProductCounter productId="corona-ramo" nombre="Corona de Ramo" />
-              <ProductCounter
-                productId="corona-grande"
-                nombre="Corona grande con imagen"
-              />
-              <ProductCounter
-                productId="corona-mediana"
-                nombre="Corona mediana con imagen"
-              />
-              <ProductCounter
-                productId="corona-pequeña"
-                nombre="Corona pequeña con imagen"
-              />
-            </ProductSection>
+            {categories.map((categoria) => {
+              const productos = getProductsByCategory(categoria);
+              if (productos.length === 0) return null;
 
-            <ProductSection value="cruces" title="Cruces">
-              <ProductCounter productId="cruz-grande" nombre="Cruz grande" />
-              <ProductCounter productId="cruz-mediana" nombre="Cruz mediana" />
-              <ProductCounter productId="cruz-pequeña" nombre="Cruz pequeña" />
-            </ProductSection>
-
-            <ProductSection value="arcos" title="Arcos">
-              <ProductCounter productId="arco-grande" nombre="Arco grande" />
-              <ProductCounter productId="arco-mediano" nombre="Arco mediano" />
-              <ProductCounter productId="arco-pequeño" nombre="Arco pequeño" />
-            </ProductSection>
+              return (
+                <ProductSection
+                  key={categoria}
+                  value={categoria}
+                  title={categoria.charAt(0).toUpperCase() + categoria.slice(1)}
+                >
+                  {productos.map((producto) => (
+                    <ProductCounter
+                      key={producto.id}
+                      productId={producto.id}
+                      nombre={producto.nombre}
+                    />
+                  ))}
+                </ProductSection>
+              );
+            })}
           </Accordion>
         </div>
 

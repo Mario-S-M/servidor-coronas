@@ -10,6 +10,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Category {
+  id        String    @id @default(uuid())
+  nombre    String    @unique @db.VarChar(50)
+  activo    Boolean   @default(true)
+  orden     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("categories")
+}
+
 model Product {
   id               String      @id
   nombre           String      @db.VarChar(100)

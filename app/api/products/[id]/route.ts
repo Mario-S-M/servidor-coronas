@@ -19,6 +19,23 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateProductSchema.parse(body);
 
+    // Si se está actualizando la categoría, verificar que exista
+    if (validatedData.categoria) {
+      const categoryExists = await prisma.category.findFirst({
+        where: {
+          nombre: validatedData.categoria,
+          activo: true,
+        },
+      });
+
+      if (!categoryExists) {
+        return NextResponse.json(
+          { error: `La categoría "${validatedData.categoria}" no existe` },
+          { status: 400 }
+        );
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {

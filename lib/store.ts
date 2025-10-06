@@ -24,6 +24,8 @@ interface ProductStore {
   setCustomerPhone: (phone: string) => void;
   updateProductCount: (productId: string, newCount: number) => void;
   getProductById: (productId: string) => ProductItem | undefined;
+  getProductsByCategory: (categoria: string) => ProductItem[];
+  getCategories: () => string[];
   getTotalItems: () => number;
   getTotalAmount: () => number;
   getTicketItems: () => Array<{
@@ -58,6 +60,15 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
   getProductById: (productId: string) => {
     return get().products.find((product) => product.id === productId);
+  },
+
+  getProductsByCategory: (categoria: string) => {
+    return get().products.filter((product) => product.categoria === categoria);
+  },
+
+  getCategories: () => {
+    const categories = new Set(get().products.map((p) => p.categoria));
+    return Array.from(categories).sort();
   },
 
   getTotalItems: () => {
