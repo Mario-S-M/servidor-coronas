@@ -1,0 +1,82 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build
+.next
+out
+dist
+build
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment
+.env
+.env.*
+!.env.example
+!.env.production
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+pm2-*.log
+.pm2
+
+# Testing
+coverage
+.nyc_output
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+.docker
+
+# Documentation (no necesaria en la imagen)
+README.md
+DOCKER-*.md
+DEPLOYMENT-*.md
+SECURITY-*.md
+QUICK-*.md
+SETUP-*.md
+*.md
+!package.json
+
+# Scripts de desarrollo
+deploy.sh
+deploy.bat
+check-setup.bat
+status.bat
+start.bat
+start.sh
+run-seed.ps1
+
+# Backup
+*.backup
+*.bak
+*.tmp
+
+# Prisma (se genera en el build)
+lib/generated
+
+# Misc
+.cache
+.vercel
+.turbo

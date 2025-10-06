@@ -17,6 +17,11 @@ services:
     restart: unless-stopped
     networks:
       - coronas_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coronas_user -d coronas_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   adminer:
     image: adminer
@@ -25,8 +30,39 @@ services:
       - "8081:8080"
     depends_on:
       - postgres
+    restart: unless-stopped
     networks:
       - coronas_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coronas_app
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://coronas_user:coronas_password@postgres:5432/coronas_db
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - coronas_network
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3001 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:
