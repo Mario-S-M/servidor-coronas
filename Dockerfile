@@ -50,15 +50,14 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/ecosystem.config.json ./ecosystem.config.json
 COPY --from=builder /app/package.json ./package.json
 
-# Crear directorio de logs
-RUN mkdir -p logs
-
 # Copiar script de entrada
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Cambiar permisos
-RUN chown -R nextjs:nodejs /app
+# Crear directorio de logs y cambiar permisos de todo
+RUN mkdir -p logs && \
+    chown -R nextjs:nodejs /app && \
+    chmod -R 755 /app/logs
 
 USER nextjs
 
