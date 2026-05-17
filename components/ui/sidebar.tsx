@@ -16,6 +16,7 @@ import {
   Settings,
   BarChart3,
   Users,
+  FileBarChart2,
 } from "lucide-react";
 
 const navigation = [
@@ -43,6 +44,11 @@ const navigation = [
     name: "Historial",
     href: "/historial",
     icon: History,
+  },
+  {
+    name: "Reportes",
+    href: "/reportes",
+    icon: FileBarChart2,
   },
   {
     name: "Corte de Caja",
