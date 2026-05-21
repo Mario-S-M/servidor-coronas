@@ -44,9 +44,8 @@ RUN npm install -g pm2
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+# Copiar node_modules completo para que Prisma CLI tenga todas sus dependencias
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/ecosystem.config.json ./ecosystem.config.json
 COPY --from=builder /app/package.json ./package.json
