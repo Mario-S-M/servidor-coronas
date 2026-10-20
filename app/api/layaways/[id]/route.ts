@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -35,12 +36,33 @@ export async function GET(_request: Request, { params }: Params) {
   }
 }
 
-export async function PATCH(request: Request, { params }: Params) {
+async function handlePATCH(request: Request, { params }: Params) {
   const { id } = await params;
   try {
     const parsed = patchSchema.safeParse(await request.json());
     if (!parsed.success) {
       return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
+    }
+    if (parsed.data.status === "entregado") {
+      const current = await prisma.layaway.findUnique({
+        where: { id },
+        include: layawayInclude,
+      });
+      if (!current) {
+        return NextResponse.json(
+          { error: "Apartado no encontrado" },
+          { status: 404 }
+        );
+      }
+      const { balance } = serializeLayaway(current);
+      if (balance > 0) {
+        return NextResponse.json(
+          {
+            error: `Aún hay un saldo de $${balance.toFixed(2)} por cobrar`,
+          },
+          { status: 400 }
+        );
+      }
     }
     if (parsed.data.production) {
       const current = await prisma.layaway.findUnique({
@@ -72,7 +94,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: Request, { params }: Params) {
+async function handleDELETE(_request: Request, { params }: Params) {
   const { id } = await params;
   try {
     await prisma.layaway.delete({ where: { id } });
@@ -85,3 +107,6 @@ export async function DELETE(_request: Request, { params }: Params) {
     );
   }
 }
+
+export const PATCH = withRealtime(["layaways"], handlePATCH);
+export const DELETE = withRealtime(["layaways"], handleDELETE);

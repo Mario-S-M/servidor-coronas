@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { saveAddonPrice } from "@/lib/pricing";
@@ -16,7 +17,7 @@ const schema = z
   );
 
 /** Cambia el precio, el nombre o si se ofrece un extra en un año. */
-export async function PUT(request: Request) {
+async function handlePUT(request: Request) {
   try {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) {
@@ -35,3 +36,5 @@ export async function PUT(request: Request) {
     );
   }
 }
+
+export const PUT = withRealtime(["catalog"], handlePUT);

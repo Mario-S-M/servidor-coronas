@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealtime } from "@/lib/realtime/client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,10 @@ export default function ClientesPage() {
   useEffect(() => {
     loadCustomers();
   }, []);
+  // Tiempo real: clientes nuevos y lo que han comprado
+  useRealtime(["customers", "sales"], () => {
+    loadCustomers();
+  });
 
   const loadCustomers = async () => {
     try {

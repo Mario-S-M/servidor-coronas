@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -25,7 +26,7 @@ export async function GET() {
 
 const createSchema = z.object({ name: z.string().trim().min(1).max(50) });
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const parsed = createSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -45,3 +46,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Error al crear el color" }, { status: 500 });
   }
 }
+
+export const POST = withRealtime(["catalog"], handlePOST);

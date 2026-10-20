@@ -1,7 +1,8 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function DELETE(
+async function handleDELETE(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -29,7 +30,7 @@ export async function DELETE(
   }
 }
 
-export async function PATCH(
+async function handlePATCH(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
@@ -89,3 +90,6 @@ export async function PATCH(
     );
   }
 }
+
+export const DELETE = withRealtime(["sales"], handleDELETE);
+export const PATCH = withRealtime(["sales"], handlePATCH);

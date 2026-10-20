@@ -43,6 +43,7 @@ export function serializeLayaway(layaway: LayawayWithRelations) {
         key: a.key,
         name: a.name,
         detail: a.detail,
+        quantity: a.quantity,
         price: Number(a.price),
       })),
     })),
@@ -81,8 +82,13 @@ export function layawayToTicketData(l: LayawayDTO): LayawayTicketData {
     folio: l.folio,
     date: new Date(l.createdAt),
     customerName: l.customerName,
+    customerPhone: l.customerPhone,
     total: l.total,
     deposit: l.deposit,
+    payments: l.payments.map((p) => ({
+      amount: p.amount,
+      date: new Date(p.createdAt),
+    })),
     items: l.items.map((i) => ({
       name: i.productName,
       quantity: i.quantity,
@@ -91,11 +97,11 @@ export function layawayToTicketData(l: LayawayDTO): LayawayTicketData {
       details: [
         i.color ? `Color: ${i.color}` : null,
         i.flores ? `Flores: ${i.flores}` : null,
-        i.imagenDesc ? `Imagen: ${i.imagenDesc}` : null,
+        i.imagenDesc ? `Santo/imagen: ${i.imagenDesc}` : null,
         i.cromoDesc ? `Cromo: ${i.cromoDesc}` : null,
       ].filter((d): d is string => !!d),
       addons: i.addons.map((a) => ({
-        name: a.detail ? `${a.name}: ${a.detail}` : a.name,
+        name: `${a.quantity > 1 ? `${a.quantity} x ` : ""}${a.name}${a.detail ? `: ${a.detail}` : ""}`,
         price: a.price,
       })),
     })),

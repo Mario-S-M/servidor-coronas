@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealtime } from "@/lib/realtime/client";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +35,12 @@ export default function ReportesPage() {
   const [anio, setAnio] = useState(CURRENT_YEAR);
   const [tipo, setTipo] = useState("all");
 
-  const fetchData = async (selectedAnio = anio, selectedTipo = tipo) => {
-    setLoading(true);
+  const fetchData = async (
+    selectedAnio = anio,
+    selectedTipo = tipo,
+    silent = false
+  ) => {
+    if (!silent) setLoading(true);
     try {
       const params = new URLSearchParams();
       params.set("desde", `${selectedAnio}-01-01`);
@@ -51,6 +56,11 @@ export default function ReportesPage() {
       setLoading(false);
     }
   };
+
+  // Tiempo real: con los filtros que estén puestos
+  useRealtime(["sales"], () => {
+    fetchData(undefined, undefined, true);
+  });
 
   useEffect(() => {
     fetchData();

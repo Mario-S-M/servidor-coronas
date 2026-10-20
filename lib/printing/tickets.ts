@@ -35,10 +35,13 @@ export interface LayawayTicketData {
   folio: string;
   date: Date;
   customerName: string;
+  customerPhone?: string | null;
   items: TicketItemData[];
   total: number;
   /** Cantidad que dejó al apartar. */
   deposit: number;
+  /** Todos los abonos, del primero al último, con su fecha y hora. */
+  payments?: { amount: number; date: Date }[];
 }
 
 /** Línea lógica del ticket; la consumen el render ESC/POS y el de HTML. */
@@ -140,7 +143,14 @@ export function saleTicketLines(sale: SaleTicketData): TicketLine[] {
 }
 
 export function layawayTicketLines(l: LayawayTicketData): TicketLine[] {
-  const balance = Math.max(0, l.total - l.deposit);
+  // Sin lista de abonos se toma el anticipo como único pago
+  const payments = l.payments?.length
+    ? l.payments
+    : l.deposit > 0
+    ? [{ amount: l.deposit, date: l.date }]
+    : [];
+  const paid = payments.reduce((s, p) => s + p.amount, 0);
+  const balance = Math.max(0, l.total - paid);
   const isPedido = l.kind === "pedido";
   const lines = header(isPedido ? "TICKET DE PEDIDO" : "TICKET DE APARTADO");
   lines.push(
@@ -150,6 +160,9 @@ export function layawayTicketLines(l: LayawayTicketData): TicketLine[] {
       text: `${isPedido ? "Pedido de" : "Aparta"}: ${l.customerName}`,
       bold: true,
     },
+    ...(l.customerPhone
+      ? [{ kind: "text", text: `Tel: ${l.customerPhone}` } as TicketLine]
+      : []),
     { kind: "text", text: `Fecha: ${formatTicketDate(l.date)}` },
     { kind: "text", text: `Hora:  ${formatTicketTime(l.date)}` },
     { kind: "rule", char: "-" }
@@ -157,8 +170,21 @@ export function layawayTicketLines(l: LayawayTicketData): TicketLine[] {
   lines.push(...itemLines(l.items));
   lines.push(
     { kind: "rule", char: "-" },
-    { kind: "row", left: "TOTAL:", right: money(l.total) },
-    { kind: "row", left: "DEJO:", right: money(l.deposit), bold: true },
+    { kind: "row", left: "TOTAL:", right: money(l.total) }
+  );
+  if (payments.length > 0) {
+    lines.push({ kind: "text", text: "ABONOS", bold: true });
+    payments.forEach((p, i) => {
+      lines.push({
+        kind: "row",
+        left: `${formatTicketDate(p.date)} ${formatTicketTime(p.date)} ${i === 0 && l.deposit > 0 ? "Anticipo" : "Abono"}`,
+        right: money(p.amount),
+      });
+    });
+    lines.push({ kind: "rule", char: "-" });
+  }
+  lines.push(
+    { kind: "row", left: "PAGADO:", right: money(paid), bold: true },
     { kind: "row", left: "SALDO:", right: money(balance), bold: true },
     { kind: "rule", char: "=" }
   );

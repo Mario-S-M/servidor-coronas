@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRealtime } from "@/lib/realtime/client";
 import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import type { LayawayDTO } from "@/lib/layaways";
@@ -14,15 +15,21 @@ export interface Product {
   nombre: string;
   categoria: string;
   precioMenudeo: number | string;
+  incluyeImagen?: boolean;
 }
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  useEffect(() => {
+  const load = useCallback(() => {
     api<Product[]>("/api/products")
       .then(setProducts)
       .catch(() => toast.error("No se pudieron cargar los productos"));
   }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
+  // Tiempo real: precios y productos nuevos, sin tocar lo que se está capturando
+  useRealtime(["catalog"], load);
   return products;
 }
 

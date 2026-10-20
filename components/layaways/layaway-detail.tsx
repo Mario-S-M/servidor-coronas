@@ -186,7 +186,7 @@ export function LayawayDetail({
                     <dl className="mt-2 space-y-1 text-xs text-zinc-600 dark:text-zinc-300">
                       <Spec label="Colores" value={i.color} />
                       <Spec label="Flores" value={i.flores} />
-                      <Spec label="Imagen" value={i.imagenDesc} />
+                      <Spec label="Santo / imagen" value={i.imagenDesc} />
                       <Spec label="Cromo" value={i.cromoDesc} />
                       <div className="flex justify-between">
                         <dt className="text-zinc-500">Base</dt>
@@ -198,7 +198,8 @@ export function LayawayDetail({
                           className="flex justify-between font-medium text-violet-700 dark:text-violet-300"
                         >
                           <dt className="min-w-0">
-                            + {a.name}
+                            + {a.quantity > 1 ? `${a.quantity} × ` : ""}
+                            {a.name}
                             {a.detail ? `: ${a.detail}` : ""}
                           </dt>
                           <dd className="tabular-nums">{money(a.price)}</dd>
@@ -267,13 +268,19 @@ export function LayawayDetail({
           </section>
 
           {/* Estado */}
+          {l.status === "activo" && l.balance > 0 && (
+            <p className="-mb-2 text-center text-xs font-medium text-amber-700 dark:text-amber-300">
+              Falta cobrar {money(l.balance)} para poder entregar.
+            </p>
+          )}
           <section className="grid grid-cols-2 gap-2">
             {l.status === "activo" ? (
               <>
                 <button
                   type="button"
+                  disabled={l.balance > 0}
                   onClick={() => setStatus("entregado")}
-                  className={`${actionBtn} border-transparent bg-emerald-600 text-white`}
+                  className={`${actionBtn} border-transparent bg-emerald-600 text-white disabled:opacity-40`}
                 >
                   Marcar entregado
                 </button>

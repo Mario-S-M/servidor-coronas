@@ -1,8 +1,9 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 // PUT - Actualizar categoría
-export async function PUT(
+async function handlePUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -75,7 +76,7 @@ export async function PUT(
 }
 
 // DELETE - Eliminar categoría (hard delete)
-export async function DELETE(
+async function handleDELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -127,3 +128,6 @@ export async function DELETE(
     );
   }
 }
+
+export const PUT = withRealtime(["catalog"], handlePUT);
+export const DELETE = withRealtime(["catalog"], handleDELETE);

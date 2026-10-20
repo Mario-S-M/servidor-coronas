@@ -3,13 +3,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, User, Phone } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useProductStore } from "@/lib/store";
 import { PrintButton } from "@/components/print-button";
 import { saleTicketLines, type SaleTicketData } from "@/lib/printing/tickets";
 
-export function Ticket() {
+export function Ticket({
+  onSavedChange,
+}: {
+  /** Avisa si hay una venta recién guardada (para mostrar "Imprimir" en la barra del teléfono). */
+  onSavedChange?: (saved: boolean) => void;
+}) {
   const [savedSale, setSavedSale] = useState<SaleTicketData | null>(null);
+  useEffect(() => {
+    onSavedChange?.(savedSale !== null);
+  }, [savedSale, onSavedChange]);
   const {
     getTicketItems,
     getTotalAmount,

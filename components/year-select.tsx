@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRealtime } from "@/lib/realtime/client";
 import { cn } from "@/lib/utils";
 
 export const THIS_YEAR = new Date().getFullYear();
@@ -8,7 +9,7 @@ export const THIS_YEAR = new Date().getFullYear();
 /** Años con datos (precios, ventas o apartados), del más nuevo al más viejo. */
 export function useYears() {
   const [years, setYears] = useState<number[]>([THIS_YEAR]);
-  useEffect(() => {
+  const load = useCallback(() => {
     fetch(`/api/prices?year=${THIS_YEAR}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { years: number[] } | null) => {
@@ -17,6 +18,10 @@ export function useYears() {
       })
       .catch(() => {});
   }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
+  useRealtime(["catalog", "sales", "layaways"], load);
   return years;
 }
 

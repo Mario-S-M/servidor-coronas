@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -22,7 +23,7 @@ function mostFrequent(values: number[]): number | null {
  * que más se vendió de cada producto, por separado en menudeo y mayoreo.
  * Solo crea los productos que ese año todavía no tienen precio guardado.
  */
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) {
@@ -93,3 +94,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRealtime(["catalog"], handlePOST);

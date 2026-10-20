@@ -10,6 +10,8 @@ export interface ProductPriceRow {
   precioMenudeo: number;
   precioMayoreo: number;
   precioProduccion: number | null;
+  /** La corona ya trae imagen: no se cobra como extra. */
+  incluyeImagen: boolean;
   /** Año del que sale el precio; null = precio base del producto sin año. */
   sourceYear: number | null;
   /** true si el año pedido tiene su propio precio guardado. */
@@ -60,6 +62,7 @@ export async function resolveProductPrices(
         precioMenudeo: Number(p.precioMenudeo),
         precioMayoreo: Number(p.precioMayoreo),
         precioProduccion: Number(p.precioProduccion),
+        incluyeImagen: p.incluyeImagen,
         sourceYear: null,
         exact: false,
       };
@@ -73,6 +76,7 @@ export async function resolveProductPrices(
       // null = ese año no registró precio de producción (no se arrastra el actual)
       precioProduccion:
         row.precioProduccion === null ? null : Number(row.precioProduccion),
+      incluyeImagen: p.incluyeImagen,
       sourceYear: row.year,
       exact: row.year === year,
     };

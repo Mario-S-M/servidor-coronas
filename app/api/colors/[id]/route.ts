@@ -1,7 +1,8 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function DELETE(
+async function handleDELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -15,3 +16,5 @@ export async function DELETE(
     return NextResponse.json({ error: "Error al quitar el color" }, { status: 500 });
   }
 }
+
+export const DELETE = withRealtime(["catalog"], handleDELETE);

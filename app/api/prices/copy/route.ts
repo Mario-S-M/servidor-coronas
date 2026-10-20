@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -14,7 +15,7 @@ const schema = z.object({
 });
 
 /** Copia a `to` los precios de `from` que `to` todavía no tiene. No pisa nada. */
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success || parsed.data.from === parsed.data.to) {
@@ -66,3 +67,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRealtime(["catalog"], handlePOST);

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRealtime } from "@/lib/realtime/client";
+import { Minus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { LayawayDTO } from "@/lib/layaways";
@@ -14,7 +15,9 @@ import { inputClass, money } from "./ui";
 
 interface Ramo {
   uid: number;
-  flores: string;
+  cantidad: number;
+  flor: string;
+  color: string;
 }
 
 interface Draft {
@@ -56,7 +59,7 @@ export function NewPedido({
   const products = useProducts();
   const [addons, setAddons] = useState<AddonPriceRow[]>([]);
   const [colorCatalog, setColorCatalog] = useState<string[]>([]);
-  useEffect(() => {
+  const loadCatalog = useCallback(() => {
     // Extras, precios y colores se administran en "Precios por año"
     api<{ addons: AddonPriceRow[] }>("/api/prices")
       .then((r) => setAddons(r.addons))
@@ -65,6 +68,11 @@ export function NewPedido({
       .then((r) => setColorCatalog(r.map((c) => c.name)))
       .catch(() => toast.error("No se pudieron cargar los colores"));
   }, []);
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+  // Tiempo real: si cambian precios o extras, se actualizan sin borrar las coronas capturadas
+  useRealtime(["catalog"], loadCatalog);
 
   const extras = addons.filter((a) => a.group === "extra");
   const ramo = addons.find((a) => a.group === "ramo");
@@ -87,14 +95,18 @@ export function NewPedido({
   const update = (uid: number, patch: Partial<Draft>) =>
     setDrafts((ds) => ds.map((d) => (d.uid === uid ? { ...d, ...patch } : d)));
 
+  // Las coronas que ya traen imagen no la cobran; solo se anota el santo
+  const includesImage = (d: Draft) =>
+    !!products.find((p) => p.id === d.productId)?.incluyeImagen;
+
   const priceOf = (d: Draft) => {
     const base = Number(products.find((p) => p.id === d.productId)?.precioMenudeo ?? 0);
     const extrasTotal = d.extras.reduce(
       (s, key) => s + (extras.find((e) => e.key === key)?.price ?? 0),
       0
     );
-    const ramosTotal = d.ramos.length * (ramo?.price ?? 0);
-    const image = d.conImagen
+    const ramosTotal = d.ramos.reduce((s, r) => s + r.cantidad, 0) * (ramo?.price ?? 0);
+    const image = d.conImagen && !includesImage(d)
       ? imageSizes.find((s) => s.key === d.imageSize)?.price ?? 0
       : 0;
     return base + extrasTotal + ramosTotal + image;
@@ -107,8 +119,10 @@ export function NewPedido({
   const draftOk = (d: Draft) =>
     !!d.productId &&
     d.colors.length > 0 &&
-    d.ramos.every((r) => r.flores.trim()) &&
-    (!d.conImagen || (!!d.imageSize && !!d.imagenDesc.trim()));
+    d.ramos.every((r) => r.flor.trim() && r.color.trim()) &&
+    (includesImage(d)
+      ? !!d.imagenDesc.trim()
+      : !d.conImagen || (!!d.imageSize && !!d.imagenDesc.trim()));
   const allOk = drafts.length > 0 && drafts.every(draftOk);
 
   const addColor = (d: Draft, raw: string) => {
@@ -135,12 +149,19 @@ export function NewPedido({
             productId: d.productId,
             quantity: 1,
             colors: d.colors,
-            imagenDesc: d.conImagen ? d.imagenDesc : null,
-            cromoDesc: d.conImagen ? d.cromoDesc : null,
+            imagenDesc: d.conImagen || includesImage(d) ? d.imagenDesc : null,
+            cromoDesc: d.conImagen || includesImage(d) ? d.cromoDesc : null,
             addons: [
               ...d.extras.map((key) => ({ key })),
-              ...d.ramos.map((r) => ({ key: RAMO_KEY, detail: r.flores })),
-              ...(d.conImagen && d.imageSize ? [{ key: d.imageSize }] : []),
+              ...d.ramos.map((r) => ({
+                key: RAMO_KEY,
+                quantity: r.cantidad,
+                flor: r.flor,
+                color: r.color,
+              })),
+              ...(d.conImagen && !includesImage(d) && d.imageSize
+                ? [{ key: d.imageSize }]
+                : []),
             ],
           })),
         }),
@@ -153,6 +174,27 @@ export function NewPedido({
       setSaving(false);
     }
   };
+
+  const santoFields = (d: Draft) => (
+    <>
+      <Field label="Santo o imagen">
+        <input
+          value={d.imagenDesc}
+          onChange={(e) => update(d.uid, { imagenDesc: e.target.value })}
+          placeholder="Ej. San Judas Tadeo"
+          className={inputClass}
+        />
+      </Field>
+      <Field label="Cromo (opcional)">
+        <input
+          value={d.cromoDesc}
+          onChange={(e) => update(d.uid, { cromoDesc: e.target.value })}
+          placeholder="Ej. Sagrado Corazón"
+          className={inputClass}
+        />
+      </Field>
+    </>
+  );
 
   return (
     <FormShell
@@ -170,7 +212,7 @@ export function NewPedido({
         tooMuch
           ? "El anticipo no puede ser mayor al total."
           : !allOk
-          ? "Cada corona necesita tipo y al menos un color (y flores en cada ramo; tamaño e imagen si lleva)."
+          ? "Cada corona necesita tipo y al menos un color (y flor y color en cada ramo; santo o imagen, y tamaño si es extra)."
           : null
       }
     >
@@ -249,7 +291,12 @@ export function NewPedido({
                     <Pill
                       key={p.id}
                       active={d.productId === p.id}
-                      onClick={() => update(d.uid, { productId: p.id })}
+                      onClick={() =>
+                        update(d.uid, {
+                          productId: p.id,
+                          ...(p.incluyeImagen && { conImagen: false, imageSize: null }),
+                        })
+                      }
                     >
                       <span>{productLabel(p.categoria, p.nombre)}</span>
                       <span className="text-xs font-normal opacity-70">
@@ -329,49 +376,95 @@ export function NewPedido({
               </p>
             </Field>
 
-            {/* Ramos de flores: tantos como pidan, cada uno con sus flores */}
+            {/* Ramos de flores: cantidad, flor y color de cada línea */}
             {ramo && (
               <Field label={`${ramo.name} (${money(ramo.price)} cada uno)`}>
-                <ul className="space-y-2">
-                  {d.ramos.map((r, i) => (
-                    <li key={r.uid} className="flex gap-2">
-                      <input
-                        value={r.flores}
-                        onChange={(e) =>
-                          update(d.uid, {
-                            ramos: d.ramos.map((x) =>
-                              x.uid === r.uid ? { ...x, flores: e.target.value } : x
-                            ),
-                          })
-                        }
-                        placeholder={`Flores del ramo ${i + 1}, ej. Lilis`}
-                        className={inputClass}
-                      />
-                      <button
-                        type="button"
-                        aria-label={`Quitar ramo ${i + 1}`}
-                        onClick={() =>
-                          update(d.uid, {
-                            ramos: d.ramos.filter((x) => x.uid !== r.uid),
-                          })
-                        }
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-300 text-red-600 transition active:scale-95 dark:border-zinc-700"
+                <ul className="space-y-3">
+                  {d.ramos.map((r, i) => {
+                    const patch = (p: Partial<Ramo>) =>
+                      update(d.uid, {
+                        ramos: d.ramos.map((x) => (x.uid === r.uid ? { ...x, ...p } : x)),
+                      });
+                    return (
+                      <li
+                        key={r.uid}
+                        className="space-y-2 rounded-xl border border-zinc-300 bg-white p-3 dark:border-zinc-700 dark:bg-black"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </li>
-                  ))}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1" role="group" aria-label={`Cantidad de ramos de la línea ${i + 1}`}>
+                            <button
+                              type="button"
+                              aria-label="Menos ramos"
+                              disabled={r.cantidad <= 1}
+                              onClick={() => patch({ cantidad: r.cantidad - 1 })}
+                              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-300 transition active:scale-95 disabled:opacity-40 dark:border-zinc-700"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="w-16 text-center text-sm font-bold tabular-nums">
+                              {r.cantidad} {r.cantidad === 1 ? "ramo" : "ramos"}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label="Más ramos"
+                              onClick={() => patch({ cantidad: Math.min(50, r.cantidad + 1) })}
+                              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-300 transition active:scale-95 dark:border-zinc-700"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold tabular-nums">
+                              {money(ramo.price * r.cantidad)}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Quitar línea de ramos ${i + 1}`}
+                              onClick={() =>
+                                update(d.uid, { ramos: d.ramos.filter((x) => x.uid !== r.uid) })
+                              }
+                              className="flex h-11 w-11 items-center justify-center rounded-xl text-red-600 transition active:scale-95 hover:bg-red-50 dark:hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={r.flor}
+                            onChange={(e) => patch({ flor: e.target.value })}
+                            placeholder="Flor, ej. Lirios"
+                            aria-label="Nombre de la flor"
+                            className={inputClass}
+                          />
+                          <input
+                            value={r.color}
+                            onChange={(e) => patch({ color: e.target.value })}
+                            list="colores-ramo"
+                            placeholder="Color, ej. Rosa"
+                            aria-label="Color de la flor"
+                            className={inputClass}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
+                <datalist id="colores-ramo">
+                  {colorCatalog.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
                 <button
                   type="button"
                   onClick={() =>
                     update(d.uid, {
-                      ramos: [...d.ramos, { uid: nextUid++, flores: "" }],
+                      ramos: [...d.ramos, { uid: nextUid++, cantidad: 1, flor: "", color: "" }],
                     })
                   }
                   className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 text-sm font-semibold transition active:scale-[0.98] dark:border-zinc-700"
                 >
-                  <Plus className="h-4 w-4" /> Agregar un ramo
+                  <Plus className="h-4 w-4" /> Agregar ramos
                 </button>
               </Field>
             )}
@@ -402,8 +495,16 @@ export function NewPedido({
               </Field>
             )}
 
-            {/* Imagen: el precio depende del tamaño */}
-            {imageSizes.length > 0 && (
+            {/* Imagen: incluida en la corona (sin costo) o extra con precio por tamaño */}
+            {d.productId && includesImage(d) && (
+              <div className="space-y-4 rounded-xl border border-dashed border-emerald-400 p-3 dark:border-emerald-500/40">
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                  Imagen incluida · sin costo
+                </p>
+                {santoFields(d)}
+              </div>
+            )}
+            {d.productId && !includesImage(d) && imageSizes.length > 0 && (
               <div className="space-y-3">
                 <Pill
                   active={d.conImagen}
@@ -414,7 +515,7 @@ export function NewPedido({
                     })
                   }
                 >
-                  <span>Lleva imagen</span>
+                  <span>Lleva imagen (extra)</span>
                   <span className="text-xs font-normal opacity-70">
                     desde {money(minImage)}
                   </span>
@@ -438,22 +539,7 @@ export function NewPedido({
                         ))}
                       </div>
                     </Field>
-                    <Field label="Qué imagen lleva">
-                      <input
-                        value={d.imagenDesc}
-                        onChange={(e) => update(d.uid, { imagenDesc: e.target.value })}
-                        placeholder="Ej. Virgen de Guadalupe"
-                        className={inputClass}
-                      />
-                    </Field>
-                    <Field label="Qué cromo lleva">
-                      <input
-                        value={d.cromoDesc}
-                        onChange={(e) => update(d.uid, { cromoDesc: e.target.value })}
-                        placeholder="Ej. Sagrado Corazón"
-                        className={inputClass}
-                      />
-                    </Field>
+                    {santoFields(d)}
                   </div>
                 )}
               </div>

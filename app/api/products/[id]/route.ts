@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
@@ -11,7 +12,7 @@ const updateProductSchema = z.object({
   categoria: z.string().optional(),
 });
 
-export async function PUT(
+async function handlePUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -74,7 +75,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
+async function handleDELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -96,3 +97,6 @@ export async function DELETE(
     );
   }
 }
+
+export const PUT = withRealtime(["catalog"], handlePUT);
+export const DELETE = withRealtime(["catalog"], handleDELETE);

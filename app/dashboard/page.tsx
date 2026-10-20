@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealtime } from "@/lib/realtime/client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Line } from "react-chartjs-2";
@@ -113,6 +114,12 @@ export default function DashboardPage() {
       console.error("Error al cargar ganancias:", error);
     }
   };
+
+  // Tiempo real: las cifras se actualizan solas cuando alguien vende
+  useRealtime(["sales", "layaways"], () => {
+    loadSales();
+    loadProfits();
+  });
 
   const processDailySales = () => {
     const salesByDate: { [key: string]: { total: number; count: number } } = {};

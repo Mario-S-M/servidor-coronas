@@ -1,140 +1,74 @@
 "use client";
 
-import { useEffect } from "react";
-import { ProductCounter } from "@/components/ui/product-counter";
-import { ProductSection } from "@/components/ui/product-section";
-import { Accordion } from "@/components/ui/accordion";
-import { Ticket } from "@/components/ui/ticket";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Phone } from "lucide-react";
-import { useProductStore, StoreMode } from "@/lib/store";
+import { useState } from "react";
+import { ChevronDown, Phone, User } from "lucide-react";
+import { SaleScreen } from "@/components/sales/sale-screen";
+import { StoreMode, useProductStore } from "@/lib/store";
 import { formatPhoneNumber } from "@/lib/utils";
 
-export default function DashboardPage() {
-  const {
-    loadProductsFromDB,
-    setMode,
-    mode,
-    customerName,
-    customerPhone,
-    setCustomerName,
-    setCustomerPhone,
-    getCategories,
-    getProductsByCategory,
-  } = useProductStore();
+const field =
+  "h-12 w-full rounded-xl border border-zinc-300 bg-white px-4 text-base text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-black dark:text-white dark:focus:ring-white";
 
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        setMode(StoreMode.MENUDEO);
-        await loadProductsFromDB();
-      } catch (error) {
-        console.error("Error inicializando la aplicación:", error);
-      }
-    };
-
-    initApp();
-  }, [setMode, loadProductsFromDB]);
-
-  const handlePhoneChange = (value: string) => {
-    const formatted = formatPhoneNumber(value);
-    setCustomerPhone(formatted);
-  };
-
-  const categories = getCategories();
+function CustomerOptional() {
+  const customerName = useProductStore((s) => s.customerName);
+  const customerPhone = useProductStore((s) => s.customerPhone);
+  const setCustomerName = useProductStore((s) => s.setCustomerName);
+  const setCustomerPhone = useProductStore((s) => s.setCustomerPhone);
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 lg:p-8 bg-white dark:bg-black">
-      <div className="mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-black dark:text-white">
-              Ventas Menudeo
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Precios al detalle
-            </p>
+    <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left"
+      >
+        <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-black dark:text-white">
+          <User className="h-4 w-4 shrink-0" />
+          <span className="truncate">
+            {customerName ? customerName : "Cliente (opcional)"}
+          </span>
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="grid gap-3 border-t border-zinc-200 p-4 dark:border-zinc-800 sm:grid-cols-2">
+          <input
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="Nombre"
+            aria-label="Nombre del cliente"
+            className={field}
+          />
+          <div className="relative">
+            <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="tel"
+              inputMode="tel"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(formatPhoneNumber(e.target.value))}
+              maxLength={14}
+              placeholder="XX-XX-XX-XX-XX"
+              aria-label="Teléfono del cliente"
+              className={`${field} pl-10`}
+            />
           </div>
-          <Badge
-            variant="default"
-            className="text-xs sm:text-sm w-fit bg-black dark:bg-white text-white dark:text-black"
-          >
-            Modo: {mode === StoreMode.MENUDEO ? "Menudeo" : "Mayoreo"}
-          </Badge>
         </div>
-      </div>
+      )}
+    </section>
+  );
+}
 
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 max-w-7xl mx-auto">
-        <div className="flex-1 lg:max-w-2xl space-y-3 sm:space-y-4">
-          <Card className="border-black dark:border-white bg-white dark:bg-black">
-            <CardHeader className="pb-3 sm:pb-6">
-              <CardTitle className="text-base sm:text-lg text-black dark:text-white">
-                Información del Cliente (Opcional)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4">
-              <div>
-                <label className="text-xs sm:text-sm font-semibold flex items-center gap-2 mb-1.5 sm:mb-2 text-black dark:text-white">
-                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Nombre del Cliente
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ingrese el nombre del cliente"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-black text-black dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="text-xs sm:text-sm font-semibold flex items-center gap-2 mb-1.5 sm:mb-2 text-black dark:text-white">
-                  <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Teléfono del Cliente
-                </label>
-                <input
-                  type="tel"
-                  placeholder="XX-XX-XX-XX-XX"
-                  value={customerPhone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  maxLength={14}
-                  className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent bg-white dark:bg-black text-black dark:text-white"
-                />
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  Formato: XX-XX-XX-XX-XX (10 dígitos)
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Accordion type="single" collapsible className="w-full">
-            {categories.map((categoria) => {
-              const productos = getProductsByCategory(categoria);
-              if (productos.length === 0) return null;
-
-              return (
-                <ProductSection
-                  key={categoria}
-                  value={categoria}
-                  title={categoria.charAt(0).toUpperCase() + categoria.slice(1)}
-                >
-                  {productos.map((producto) => (
-                    <ProductCounter
-                      key={producto.id}
-                      productId={producto.id}
-                      nombre={producto.nombre}
-                    />
-                  ))}
-                </ProductSection>
-              );
-            })}
-          </Accordion>
-        </div>
-
-        <div className="lg:w-80 lg:sticky lg:top-4 lg:self-start">
-          <Ticket />
-        </div>
-      </div>
-    </div>
+export default function VentasMenudeoPage() {
+  return (
+    <SaleScreen
+      mode={StoreMode.MENUDEO}
+      title="Ventas menudeo"
+      subtitle="Precios al detalle"
+      customerSection={<CustomerOptional />}
+    />
   );
 }

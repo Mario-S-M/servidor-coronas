@@ -22,7 +22,7 @@ export function LayawayCard({
   // "Ramo de flores ×2" cuando hay varios del mismo extra
   const counts = new Map<string, number>();
   for (const a of l.items.flatMap((i) => i.addons)) {
-    counts.set(a.name, (counts.get(a.name) ?? 0) + 1);
+    counts.set(a.name, (counts.get(a.name) ?? 0) + a.quantity);
   }
   const addonNames = [...counts].map(([name, n]) => (n > 1 ? `${name} ×${n}` : name));
   const itemCount = l.items.reduce((s, i) => s + i.quantity, 0);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealtime } from "@/lib/realtime/client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,11 @@ export default function CorteCajaPage() {
     filterSalesByDate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, allSales]);
+
+  // Tiempo real: el corte se actualiza solo con cada venta
+  useRealtime(["sales"], () => {
+    loadSales();
+  });
 
   const loadSales = async () => {
     try {

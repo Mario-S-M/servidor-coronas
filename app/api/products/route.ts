@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
@@ -56,7 +57,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const productData = await request.json();
     const validatedData = createProductSchema.parse(productData);
@@ -126,3 +127,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRealtime(["catalog"], handlePOST);

@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Receipt, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PrintButton } from "@/components/print-button";
@@ -18,6 +18,8 @@ import { LayawayDetail } from "@/components/layaways/layaway-detail";
 import { KindChip } from "@/components/layaways/ui";
 import type { LayawayDTO } from "@/lib/layaways";
 import { cn } from "@/lib/utils";
+import { Chip, ChipRow } from "@/components/chip";
+import { useRealtime } from "@/lib/realtime/client";
 import { Pagination, usePagination } from "@/components/pagination";
 import { THIS_YEAR, YearSelect } from "@/components/year-select";
 import { saleTicketLines } from "@/lib/printing/tickets";
@@ -72,8 +74,7 @@ export default function HistorialPage() {
     null
   );
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
       try {
         const [salesRes, productsRes, layawaysRes] = await Promise.all([
           fetch("/api/sales"),
@@ -115,10 +116,19 @@ export default function HistorialPage() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+  // Tiempo real: ventas, apartados y pedidos se actualizan solos
+  useRealtime(["sales", "layaways", "catalog"], fetchData);
+  // El registro abierto se mantiene al día
+  useEffect(() => {
+    setSelectedLayaway((cur) =>
+      cur ? layaways.find((l) => l.id === cur.id) ?? cur : cur
+    );
+  }, [layaways]);
 
   const handleViewTicket = (sale: Sale) => {
     setSelectedSale(sale);
@@ -345,24 +355,17 @@ export default function HistorialPage() {
         </div>
 
         {/* Filtro por tipo */}
-        <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        <ChipRow className="mb-4" label="Tipo de registro">
           {KIND_FILTERS.map((f) => (
-            <button
+            <Chip
               key={f.value}
-              type="button"
-              aria-pressed={kindFilter === f.value}
+              active={kindFilter === f.value}
               onClick={() => setKindFilter(f.value)}
-              className={cn(
-                "h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition active:scale-95",
-                kindFilter === f.value
-                  ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                  : "border-zinc-300 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-black dark:text-zinc-200"
-              )}
             >
               {f.label}
-            </button>
+            </Chip>
           ))}
-        </div>
+        </ChipRow>
 
         {/* Barra de búsqueda */}
         <div className="mb-6">

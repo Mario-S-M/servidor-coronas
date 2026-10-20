@@ -14,6 +14,8 @@ import { NewPedido } from "@/components/layaways/new-pedido";
 import { inputClass } from "@/components/layaways/ui";
 import { THIS_YEAR, YearSelect } from "@/components/year-select";
 import { Pagination, usePagination } from "@/components/pagination";
+import { Chip, ChipRow } from "@/components/chip";
+import { useRealtime } from "@/lib/realtime/client";
 
 type Tab = "apartado" | "pedido";
 
@@ -29,31 +31,6 @@ const TABS: { value: Tab; label: string }[] = [
   { value: "pedido", label: "Pedidos" },
 ];
 
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "h-10 shrink-0 rounded-full border px-3 text-[13px] font-semibold transition active:scale-95",
-        active
-          ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-          : "border-zinc-300 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-black dark:text-zinc-200"
-      )}
-    >
-      {children}
-    </button>
-  );
-}
 
 function ApartadosContent() {
   const params = useSearchParams();
@@ -75,8 +52,8 @@ function ApartadosContent() {
     [tab, status, addon, production, query, year].join("|")
   );
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const qs = new URLSearchParams({ kind: tab, year: String(year) });
       if (status) qs.set("status", status);
@@ -92,12 +69,26 @@ function ApartadosContent() {
   }, [tab, status, addon, production, query, year]);
 
   useEffect(() => {
-    const t = setTimeout(load, 250);
+    const t = setTimeout(() => load(), 250);
     return () => clearTimeout(t);
   }, [load]);
 
+  // Tiempo real: la lista y el registro abierto se actualizan solos, sin spinner
+  const selectedId = selected?.id;
+  useRealtime(["layaways"], () => {
+    load(true);
+    if (selectedId) {
+      api<LayawayDTO>(`/api/layaways/${selectedId}`)
+        .then(setSelected)
+        .catch(() => {
+          setSelected(null);
+          toast.info("Este registro fue eliminado desde otro equipo");
+        });
+    }
+  });
+
   // Filtros por extra: los que se ofrecen este año, más ramo e imagen
-  useEffect(() => {
+  const loadAddonFilters = useCallback(() => {
     api<{ addons: { key: string; name: string; group: string }[] }>(
       `/api/prices?year=${year}&all=1`
     )
@@ -111,6 +102,10 @@ function ApartadosContent() {
       })
       .catch(() => {});
   }, [year]);
+  useEffect(() => {
+    loadAddonFilters();
+  }, [loadAddonFilters]);
+  useRealtime(["catalog"], loadAddonFilters);
 
   // Abrir un registro desde el historial: /apartados?open=<id>
   const openId = params.get("open");
@@ -186,7 +181,7 @@ function ApartadosContent() {
         />
       </div>
 
-      <div className="-mx-4 mb-2 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+      <ChipRow className="mb-2">
         {STATUS_FILTERS.map((f) => (
           <Chip
             key={f.label}
@@ -196,10 +191,10 @@ function ApartadosContent() {
             {f.label}
           </Chip>
         ))}
-      </div>
+      </ChipRow>
 
       {tab === "pedido" && (
-        <div className="-mx-4 mb-2 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        <ChipRow className="mb-2">
           {PRODUCTION_ORDER.map((p) => (
             <Chip
               key={p}
@@ -209,11 +204,11 @@ function ApartadosContent() {
               {PRODUCTION_LABEL[p]}
             </Chip>
           ))}
-        </div>
+        </ChipRow>
       )}
 
       {tab === "pedido" && (
-        <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        <ChipRow className="mb-3">
           {addonFilters.map((f) => (
             <Chip
               key={f.value}
@@ -223,7 +218,7 @@ function ApartadosContent() {
               {f.label}
             </Chip>
           ))}
-        </div>
+        </ChipRow>
       )}
 
       {/* Lista */}

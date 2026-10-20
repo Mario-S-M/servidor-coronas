@@ -29,6 +29,8 @@ model Product {
   precioProduccion Decimal     @db.Decimal(10, 2)
   categoria        String      @db.VarChar(50)
   activo           Boolean     @default(true)
+  // true = la corona ya trae imagen: en los pedidos no se cobra aparte
+  incluyeImagen    Boolean     @default(false) @map("incluye_imagen")
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   saleItems        SaleItem[]
@@ -200,6 +202,8 @@ model LayawayItemAddon {
   name   String      @db.VarChar(60)
   // Para los ramos: qué flores lleva ese ramo
   detail String?     @db.VarChar(200)
+  // Cuántas piezas son (ej. 2 ramos); price es el total de la línea
+  quantity Int       @default(1)
   price  Decimal     @db.Decimal(10, 2)
 
   item   LayawayItem @relation(fields: [itemId], references: [id], onDelete: Cascade)

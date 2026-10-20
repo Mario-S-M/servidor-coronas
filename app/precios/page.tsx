@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRealtime } from "@/lib/realtime/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +57,8 @@ export default function PreciosPage() {
     precioMayoreo: 0,
     precioProduccion: 0,
   });
+  // true mientras hay precios editados sin guardar: no se pisan con cambios de otro equipo
+  const dirtyRef = useRef(false);
   const [newCategory, setNewCategory] = useState({ nombre: "", orden: 0 });
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -64,6 +67,27 @@ export default function PreciosPage() {
     loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Tiempo real: los cambios de otros equipos aparecen solos; si hay ediciones sin guardar
+  // se avisa en lugar de pisarlas
+  useRealtime(["catalog"], () => {
+    if (dirtyRef.current) {
+      toast.info("Los precios cambiaron en otro equipo", {
+        id: "precios-otro-equipo",
+        action: {
+          label: "Actualizar",
+          onClick: () => {
+            dirtyRef.current = false;
+            loadProducts();
+            loadCategories();
+          },
+        },
+      });
+      return;
+    }
+    loadProducts();
+    loadCategories();
+  });
 
   const loadProducts = async () => {
     try {
@@ -112,6 +136,7 @@ export default function PreciosPage() {
     value: string
   ) => {
     const numValue = parseFloat(value) || 0;
+    dirtyRef.current = true;
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, [field]: numValue } : p))
     );
@@ -139,6 +164,7 @@ export default function PreciosPage() {
       });
 
       await Promise.all(updatePromises);
+      dirtyRef.current = false;
       toast.success("Precios actualizados correctamente");
     } catch (error) {
       console.error("Error al guardar precios:", error);

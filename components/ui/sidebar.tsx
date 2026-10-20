@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LiveStatus } from "@/components/live-status";
 import {
   ShoppingCart,
   Store,
@@ -91,9 +92,12 @@ export function Sidebar() {
           >
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-          <h1 className="text-lg font-bold text-black dark:text-white">
-            Coronas PEKKA
-          </h1>
+          <div className="flex flex-col items-center leading-tight">
+            <h1 className="text-lg font-bold text-black dark:text-white">
+              Coronas PEKKA
+            </h1>
+            <LiveStatus className="text-[11px]" />
+          </div>
           <ThemeToggle />
         </div>
       </div>
@@ -149,6 +153,7 @@ export function Sidebar() {
 
           {/* Footer */}
           <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-800">
+            <LiveStatus className="mb-2 flex justify-center" />
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
               Sistema de Ventas v1.0
             </p>

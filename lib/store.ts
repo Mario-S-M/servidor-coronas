@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { SaleTicketData } from "@/lib/printing/tickets";
+import { productLabel } from "@/lib/pedidos-config";
 
 export interface ProductItem {
   id: string;
@@ -38,7 +39,8 @@ interface ProductStore {
   resetAllProducts: () => void;
   setMode: (mode: StoreMode) => void;
   saveSale: () => Promise<SaleTicketData | null>;
-  loadProductsFromDB: () => Promise<void>;
+  /** `merge`: actualiza precios y nombres sin borrar las cantidades del ticket en curso. */
+  loadProductsFromDB: (options?: { merge?: boolean }) => Promise<void>;
 }
 
 export const useProductStore = create<ProductStore>((set, get) => ({
@@ -98,7 +100,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           ? product.precioMenudeo
           : product.precioMayoreo;
       return {
-        nombre: product.nombre,
+        nombre: productLabel(product.categoria, product.nombre),
         precio: precio,
         cantidad: product.cantidad,
         total: product.cantidad * precio,
@@ -173,7 +175,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
             : cleanPhone || null,
         items: itemsWithQuantity.map((product) => ({
           productId: product.id,
-          productName: product.nombre,
+          productName: productLabel(product.categoria, product.nombre),
           quantity: product.cantidad,
           unitPrice:
             mode === StoreMode.MENUDEO
@@ -230,7 +232,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  loadProductsFromDB: async () => {
+  loadProductsFromDB: async (options) => {
     try {
       const response = await fetch("/api/products");
       if (response.ok) {
@@ -253,7 +255,26 @@ export const useProductStore = create<ProductStore>((set, get) => ({
             cantidad: 0,
           })
         );
-        set({ products });
+        if (options?.merge) {
+          const current = new Map(get().products.map((p) => [p.id, p.cantidad]));
+          const dropped = get().products.filter(
+            (p) => p.cantidad > 0 && !products.some((n: { id: string }) => n.id === p.id)
+          );
+          set({
+            products: products.map((p: { id: string }) => ({
+              ...p,
+              cantidad: current.get(p.id) ?? 0,
+            })),
+          });
+          if (dropped.length > 0) {
+            const { toast } = await import("sonner");
+            toast.warning("Se quitó del ticket un producto que ya no está disponible", {
+              description: dropped.map((p) => p.nombre).join(", "),
+            });
+          }
+        } else {
+          set({ products });
+        }
       }
     } catch (error) {
       console.error("Error al cargar productos:", error);

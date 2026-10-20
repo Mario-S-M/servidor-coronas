@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -9,7 +10,7 @@ const paymentSchema = z.object({
   amount: z.number().positive("El abono debe ser mayor a cero"),
 });
 
-export async function POST(request: Request, { params }: Params) {
+async function handlePOST(request: Request, { params }: Params) {
   const { id } = await params;
   try {
     const parsed = paymentSchema.safeParse(await request.json());
@@ -61,3 +62,5 @@ export async function POST(request: Request, { params }: Params) {
     );
   }
 }
+
+export const POST = withRealtime(["layaways"], handlePOST);

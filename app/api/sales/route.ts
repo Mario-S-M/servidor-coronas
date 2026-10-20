@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -44,7 +45,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const saleData = await request.json();
 
@@ -123,3 +124,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRealtime(["sales", "customers"], handlePOST);

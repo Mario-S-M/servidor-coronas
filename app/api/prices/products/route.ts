@@ -1,5 +1,7 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import prisma from "@/lib/prisma";
 import { saveProductPrice } from "@/lib/pricing";
 
 const schema = z.object({
@@ -10,7 +12,7 @@ const schema = z.object({
   precioProduccion: z.number().positive().nullable().optional(),
 });
 
-export async function PUT(request: Request) {
+async function handlePUT(request: Request) {
   try {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) {
@@ -32,3 +34,29 @@ export async function PUT(request: Request) {
     );
   }
 }
+
+const imageSchema = z.object({
+  productId: z.string().min(1),
+  incluyeImagen: z.boolean(),
+});
+
+/** Marca si la corona ya trae imagen (aplica a todos los años). */
+async function handlePATCH(request: Request) {
+  try {
+    const parsed = imageSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    }
+    await prisma.product.update({
+      where: { id: parsed.data.productId },
+      data: { incluyeImagen: parsed.data.incluyeImagen },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Error al guardar imagen incluida:", error);
+    return NextResponse.json({ error: "Error al guardar" }, { status: 500 });
+  }
+}
+
+export const PUT = withRealtime(["catalog"], handlePUT);
+export const PATCH = withRealtime(["catalog"], handlePATCH);

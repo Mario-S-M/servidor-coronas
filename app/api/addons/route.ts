@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -12,7 +13,7 @@ const schema = z.object({
 });
 
 /** Crea un extra nuevo (o un tamaño de imagen) y lo ofrece desde el año indicado. */
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) {
@@ -47,3 +48,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Error al crear el extra" }, { status: 500 });
   }
 }
+
+export const POST = withRealtime(["catalog"], handlePOST);

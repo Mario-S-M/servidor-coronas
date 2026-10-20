@@ -1,3 +1,4 @@
+import { withRealtime } from "@/lib/realtime/bus";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
@@ -19,9 +20,18 @@ const itemSchema = z.object({
   colors: z.array(z.string().trim().min(1).max(50)).default([]),
   imagenDesc: text(200),
   cromoDesc: text(200),
-  // Cada extra con su detalle; un ramo se repite una vez por ramo y el detalle son sus flores
+  // Cada extra con su detalle; los ramos pueden repetirse con flor, color y cantidad
   addons: z
-    .array(z.object({ key: z.string().min(1), detail: text(200) }))
+    .array(
+      z.object({
+        key: z.string().min(1),
+        detail: text(200),
+        // Ramos: cuántos, de qué flor y de qué color
+        quantity: z.number().int().min(1).max(50).default(1),
+        flor: text(100),
+        color: text(50),
+      })
+    )
     .default([]),
 });
 
@@ -95,7 +105,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const parsed = createSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -129,11 +139,17 @@ export async function POST(request: Request) {
       // En un pedido cada corona va por separado, con sus propios extras
       const quantity = isPedido ? 1 : item.quantity;
 
-      const addons: { key: string; name: string; detail: string | null; price: number }[] = [];
+      const addons: {
+        key: string;
+        name: string;
+        detail: string | null;
+        quantity: number;
+        price: number;
+      }[] = [];
       if (isPedido) {
         const seen = new Set<string>();
         let sizes = 0;
-        for (const { key, detail } of item.addons) {
+        for (const { key, detail, quantity: qty, flor, color } of item.addons) {
           const def = addonByKey.get(key);
           if (!def) {
             return NextResponse.json(
@@ -141,7 +157,15 @@ export async function POST(request: Request) {
               { status: 400 }
             );
           }
-          if (def.group === "imagen") sizes++;
+          if (def.group === "imagen") {
+            if (product.incluyeImagen) {
+              return NextResponse.json(
+                { error: "Esa corona ya trae imagen, no se cobra aparte" },
+                { status: 400 }
+              );
+            }
+            sizes++;
+          }
           // Solo los ramos se pueden repetir en una corona
           if (key !== RAMO_KEY) {
             if (seen.has(key)) {
@@ -151,17 +175,22 @@ export async function POST(request: Request) {
               );
             }
             seen.add(key);
-          } else if (!detail?.trim()) {
+          } else if (!flor?.trim() || !color?.trim()) {
             return NextResponse.json(
-              { error: "Escribe qué flores lleva cada ramo" },
+              { error: "Escribe la flor y el color de cada ramo" },
               { status: 400 }
             );
           }
+          const isRamo = key === RAMO_KEY;
+          const count = isRamo ? qty : 1;
           addons.push({
             key: def.key,
             name: def.name,
-            detail: detail?.trim() || null,
-            price: def.price,
+            detail: isRamo
+              ? `${flor!.trim()} (${color!.trim().toLowerCase()})`
+              : detail?.trim() || null,
+            quantity: count,
+            price: def.price * count,
           });
         }
         if (sizes > 1) {
@@ -241,3 +270,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withRealtime(["layaways", "catalog"], handlePOST);

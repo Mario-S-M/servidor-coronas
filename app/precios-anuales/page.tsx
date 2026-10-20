@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CalendarDays, Check, Copy, History, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Chip, ChipRow } from "@/components/chip";
+import { useRealtime } from "@/lib/realtime/client";
 import { api } from "@/components/layaways/layaway-detail";
 import { inputClass, money } from "@/components/layaways/ui";
 import type { AddonPriceRow, ProductPriceRow } from "@/lib/pricing";
@@ -57,6 +59,11 @@ export default function PreciosAnualesPage() {
   useEffect(() => {
     loadColors();
   }, [loadColors]);
+  // Tiempo real: lo que cambie otro equipo aparece solo
+  useRealtime(["catalog"], () => {
+    load();
+    loadColors();
+  });
 
   const missing =
     !!data && (data.products.some((p) => !p.exact) || data.addons.some((a) => a.activo && !a.exact));
@@ -140,24 +147,13 @@ export default function PreciosAnualesPage() {
       </header>
 
       {/* Selector de año */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+      <ChipRow label="Año">
         {years.map((y) => (
-          <button
-            key={y}
-            type="button"
-            aria-pressed={year === y}
-            onClick={() => setYear(y)}
-            className={cn(
-              "h-11 shrink-0 rounded-full border px-5 text-base font-bold tabular-nums transition active:scale-95",
-              year === y
-                ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                : "border-zinc-300 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-black dark:text-zinc-200"
-            )}
-          >
-            {y}
-          </button>
+          <Chip key={y} active={year === y} onClick={() => setYear(y)}>
+            <span className="tabular-nums">{y}</span>
+          </Chip>
         ))}
-      </div>
+      </ChipRow>
 
       {data && missing && (
         <div className="space-y-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
@@ -325,6 +321,32 @@ function PriceInput({
   );
 }
 
+/**
+ * Mantiene los campos de una tarjeta al día con lo que otro equipo cambie, sin pisar lo que
+ * esta persona está escribiendo: si ya tocó un campo, se avisa y se conserva lo suyo.
+ */
+function useLiveFields(serverKey: string, reset: () => void) {
+  const [base, setBase] = useState(serverKey);
+  const [touched, setTouched] = useState(false);
+  const resetRef = useRef(reset);
+  useEffect(() => {
+    resetRef.current = reset;
+  });
+  useEffect(() => {
+    if (serverKey !== base && !touched) {
+      setBase(serverKey);
+      resetRef.current();
+    }
+  }, [serverKey, base, touched]);
+  return {
+    touch: () => setTouched(true),
+    release: () => setTouched(false),
+    changedElsewhere: touched && serverKey !== base,
+  };
+}
+
+const ELSEWHERE = "Otro equipo cambió este precio. Si guardas, se sobrescribe.";
+
 function ProductCard({
   row,
   year,
@@ -340,6 +362,14 @@ function ProductCard({
   const [mayoreo, setMayoreo] = useState(String(row.precioMayoreo));
   const [produccion, setProduccion] = useState(
     row.precioProduccion === null ? "" : String(row.precioProduccion)
+  );
+  const live = useLiveFields(
+    [row.precioMenudeo, row.precioMayoreo, row.precioProduccion, row.exact].join("|"),
+    () => {
+      setMenudeo(String(row.precioMenudeo));
+      setMayoreo(String(row.precioMayoreo));
+      setProduccion(row.precioProduccion === null ? "" : String(row.precioProduccion));
+    }
   );
   const dirty =
     !row.exact ||
@@ -360,8 +390,27 @@ function ProductCard({
         }),
       });
       toast.success(`Precio de ${year} guardado`);
+      live.release();
       onSaved();
     } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error al guardar");
+    }
+  };
+
+  const [incluyeImagen, setIncluyeImagen] = useState(row.incluyeImagen);
+  useEffect(() => {
+    setIncluyeImagen(row.incluyeImagen);
+  }, [row.incluyeImagen]);
+  const saveImage = async (value: boolean) => {
+    setIncluyeImagen(value);
+    try {
+      await api("/api/prices/products", {
+        method: "PATCH",
+        body: JSON.stringify({ productId: row.id, incluyeImagen: value }),
+      });
+      toast.success(value ? "Esta corona ya incluye imagen" : "La imagen se cobra como extra");
+    } catch (error) {
+      setIncluyeImagen(!value);
       toast.error(error instanceof Error ? error.message : "Error al guardar");
     }
   };
@@ -381,15 +430,35 @@ function ProductCard({
         {!row.exact && <Inherited sourceYear={row.sourceYear} />}
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <PriceInput label="Menudeo" value={menudeo} onChange={setMenudeo} hint={before(previous?.precioMenudeo)} />
-        <PriceInput label="Mayoreo" value={mayoreo} onChange={setMayoreo} hint={before(previous?.precioMayoreo)} />
+        <PriceInput label="Menudeo" value={menudeo} onChange={(v) => { live.touch(); setMenudeo(v); }} hint={before(previous?.precioMenudeo)} />
+        <PriceInput label="Mayoreo" value={mayoreo} onChange={(v) => { live.touch(); setMayoreo(v); }} hint={before(previous?.precioMayoreo)} />
         <PriceInput
           label="Producción"
           value={produccion}
-          onChange={setProduccion}
+          onChange={(v) => {
+            live.touch();
+            setProduccion(v);
+          }}
           hint={before(previous?.precioProduccion)}
         />
       </div>
+      {live.changedElsewhere && (
+        <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">{ELSEWHERE}</p>
+      )}
+      <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-zinc-300 px-3 text-sm font-medium dark:border-zinc-700">
+        <input
+          type="checkbox"
+          checked={incluyeImagen}
+          onChange={(e) => saveImage(e.target.checked)}
+          className="h-5 w-5 accent-black dark:accent-white"
+        />
+        <span>
+          Incluye imagen
+          <span className="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+            En los pedidos no se cobra imagen aparte (todos los años)
+          </span>
+        </span>
+      </label>
       <div className="mt-3">
         <SaveButton dirty={dirty} onClick={save} />
       </div>
@@ -431,7 +500,7 @@ function AddonsSection({
       </h2>
       {offered(group).map((a) => (
         <AddonCard
-          key={`${a.key}-${year}-${a.exact}-${a.price}-${a.name}`}
+          key={`${a.key}-${year}`}
           row={a}
           year={year}
           previous={previous.find((x) => x.key === a.key) ?? null}
@@ -571,6 +640,10 @@ function AddonCard({
 }) {
   const [name, setName] = useState(row.name);
   const [price, setPrice] = useState(String(row.price));
+  const live = useLiveFields([row.name, row.price, row.exact].join("|"), () => {
+    setName(row.name);
+    setPrice(String(row.price));
+  });
   const dirty = !row.exact || Number(price) !== row.price || name !== row.name;
 
   const save = async () => {
@@ -580,6 +653,7 @@ function AddonCard({
         body: JSON.stringify({ key: row.key, year, name, price: Number(price) }),
       });
       toast.success(`Precio de ${year} guardado`);
+      live.release();
       onSaved();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Error al guardar");
@@ -595,18 +669,32 @@ function AddonCard({
       <div className="mb-3 flex items-center justify-between gap-2">
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            live.touch();
+            setName(e.target.value);
+          }}
           aria-label="Nombre del extra"
           className="min-w-0 flex-1 bg-transparent text-base font-bold focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
         />
         {!row.exact && <Inherited sourceYear={row.sourceYear} />}
       </div>
       <div className="grid grid-cols-[1fr_auto] items-end gap-3">
-        <PriceInput label="Precio" value={price} onChange={setPrice} hint={before} />
+        <PriceInput
+          label="Precio"
+          value={price}
+          onChange={(v) => {
+            live.touch();
+            setPrice(v);
+          }}
+          hint={before}
+        />
         <div className="w-32">
           <SaveButton dirty={dirty} onClick={save} />
         </div>
       </div>
+      {live.changedElsewhere && (
+        <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">{ELSEWHERE}</p>
+      )}
       {onRemove && (
         <button
           type="button"

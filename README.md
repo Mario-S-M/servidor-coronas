@@ -236,3 +236,12 @@ Volver a la versión anterior (en la Raspberry):
 - `/apartados`: pestañas Apartados y Pedidos. Cada corona de un pedido guarda por separado su color, flores, imagen,
   cromo y los extras con el precio que tenían ese día. Se puede filtrar por extra y por año.
 - `/historial` muestra ventas, apartados y pedidos juntos, con filtro por tipo y por año.
+
+## Tiempo real
+
+Todos los equipos conectados ven los cambios al instante (ventas, abonos, etapas de pedidos, precios, clientes, colores) sin recargar. El punto «En vivo» del menú indica que la conexión está activa.
+
+- El navegador abre una conexión SSE a `/api/events` (`app/api/events/route.ts`); el servidor avisa por tema (`sales`, `layaways`, `catalog`, `customers`) con `lib/realtime/bus.ts`.
+- Cada ruta de escritura de `app/api/**` se envuelve con `withRealtime([...temas], handler)`; al responder bien, publica el tema. Una ruta nueva que escriba datos debe envolverse igual.
+- Las pantallas usan `useRealtime(temas, recargar)` (`lib/realtime/client.ts`): recarga silenciosa, sin perder lo que se está capturando. Al reconectar, o al volver a la pestaña, se resincroniza todo.
+- El bus vive en memoria: funciona con una sola instancia (PM2 `instances: 1`, como está). Si algún día hay varias, hay que cambiarlo por `LISTEN/NOTIFY` de Postgres.
