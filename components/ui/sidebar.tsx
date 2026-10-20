@@ -18,6 +18,7 @@ import {
   Users,
   FileBarChart2,
   PackageCheck,
+  CalendarDays,
 } from "lucide-react";
 
 const navigation = [
@@ -37,7 +38,7 @@ const navigation = [
     icon: Store,
   },
   {
-    name: "Apartados",
+    name: "Apartados y pedidos",
     href: "/apartados",
     icon: PackageCheck,
   },
@@ -60,6 +61,11 @@ const navigation = [
     name: "Corte de Caja",
     href: "/corte",
     icon: Calculator,
+  },
+  {
+    name: "Precios por año",
+    href: "/precios-anuales",
+    icon: CalendarDays,
   },
   {
     name: "Editar Precios",

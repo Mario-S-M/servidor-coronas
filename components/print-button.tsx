@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Printer } from "lucide-react";
+import { Bluetooth, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   getSavedPrinterName,
   isBluetoothSupported,
@@ -18,6 +18,9 @@ interface PrintButtonProps {
   label?: string;
   className?: string;
 }
+
+const base =
+  "inline-flex w-full items-center justify-center gap-2 rounded-xl font-semibold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black dark:focus-visible:ring-white";
 
 export function PrintButton({
   lines,
@@ -65,42 +68,61 @@ export function PrintButton({
   };
 
   return (
-    <div className={className}>
-      <Button
-        size="sm"
+    <div className={cn("space-y-2", className)}>
+      <button
+        type="button"
         disabled={!lines || busy || !supported}
         onClick={() => printBluetooth(false)}
-        className="w-full"
-      >
-        <Printer className="h-4 w-4 mr-2" />
-        {busy ? "Imprimiendo..." : label}
-      </Button>
-      {!supported && (
-        <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 text-center">
-          Bluetooth no disponible: usa Chrome en Android y abre la app por
-          HTTPS (o habilita la bandera de origen seguro).
-        </p>
-      )}
-      <div className="mt-1 flex justify-center gap-3 text-xs">
-        {supported && (
-          <button
-            type="button"
-            disabled={!lines || busy}
-            onClick={() => printBluetooth(true)}
-            className="underline text-gray-600 dark:text-gray-400 disabled:opacity-50"
-          >
-            {printerName ? `Cambiar impresora (${printerName})` : "Elegir impresora"}
-          </button>
+        className={cn(
+          base,
+          "h-12 bg-black text-base text-white dark:bg-white dark:text-black"
         )}
+      >
+        <Printer className="h-5 w-5" />
+        {busy ? "Imprimiendo..." : label}
+      </button>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          disabled={!lines || busy || !supported}
+          onClick={() => printBluetooth(true)}
+          className={cn(
+            base,
+            "h-11 border border-zinc-300 bg-white text-sm text-black dark:border-zinc-700 dark:bg-black dark:text-white"
+          )}
+        >
+          <Bluetooth className="h-4 w-4 shrink-0" />
+          <span className="truncate">
+            {printerName ? "Cambiar impresora" : "Elegir impresora"}
+          </span>
+        </button>
         <button
           type="button"
           disabled={!lines}
           onClick={printFallback}
-          className="underline text-gray-600 dark:text-gray-400 disabled:opacity-50"
+          className={cn(
+            base,
+            "h-11 border border-zinc-300 bg-white text-sm text-black dark:border-zinc-700 dark:bg-black dark:text-white"
+          )}
         >
-          Imprimir con el navegador
+          <FileText className="h-4 w-4 shrink-0" />
+          <span className="truncate">Con el navegador</span>
         </button>
       </div>
+
+      {supported ? (
+        printerName && (
+          <p className="truncate text-center text-xs text-zinc-500 dark:text-zinc-400">
+            Impresora: {printerName}
+          </p>
+        )
+      ) : (
+        <p className="text-center text-xs text-amber-700 dark:text-amber-400">
+          Bluetooth no disponible. Usa Chrome en Android con HTTPS, o imprime
+          con el navegador.
+        </p>
+      )}
     </div>
   );
 }

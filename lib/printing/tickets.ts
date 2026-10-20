@@ -1,10 +1,13 @@
 import { COLS, EscPosBuilder } from "./escpos";
 import {
+  BOTTOM_FEED_LINES,
+  TOP_FEED_LINES,
   BUSINESS_ADDRESS,
   BUSINESS_NAME,
   BUSINESS_PHONE,
   BUSINESS_TAGLINE,
   LAYAWAY_FOOTER,
+  PEDIDO_FOOTER,
   SALE_FOOTER,
 } from "./business-config";
 
@@ -13,6 +16,10 @@ export interface TicketItemData {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  /** Renglones extra bajo el producto (color, flores, imagen, cromo). */
+  details?: string[];
+  /** Extras del pedido con su precio. */
+  addons?: { name: string; price: number }[];
 }
 
 export interface SaleTicketData {
@@ -24,6 +31,7 @@ export interface SaleTicketData {
 }
 
 export interface LayawayTicketData {
+  kind?: "apartado" | "pedido";
   folio: string;
   date: Date;
   customerName: string;
@@ -81,11 +89,26 @@ function itemLines(items: TicketItemData[]): TicketLine[] {
   const lines: TicketLine[] = [];
   for (const item of items) {
     lines.push({ kind: "text", text: item.name.toUpperCase(), bold: true });
+    for (const d of item.details ?? []) {
+      lines.push({ kind: "text", text: `  ${d}` });
+    }
     lines.push({
       kind: "row",
       left: `  ${item.quantity} x ${money(item.unitPrice)}`,
-      right: money(item.totalPrice),
+      right: item.addons?.length ? "" : money(item.totalPrice),
     });
+    // Cada extra va en su propio renglón con su precio
+    for (const a of item.addons ?? []) {
+      lines.push({ kind: "row", left: `  + ${a.name}`, right: money(a.price) });
+    }
+    if (item.addons?.length) {
+      lines.push({
+        kind: "row",
+        left: "  Subtotal:",
+        right: money(item.totalPrice),
+        bold: true,
+      });
+    }
   }
   return lines;
 }
@@ -118,10 +141,15 @@ export function saleTicketLines(sale: SaleTicketData): TicketLine[] {
 
 export function layawayTicketLines(l: LayawayTicketData): TicketLine[] {
   const balance = Math.max(0, l.total - l.deposit);
-  const lines = header("TICKET DE APARTADO");
+  const isPedido = l.kind === "pedido";
+  const lines = header(isPedido ? "TICKET DE PEDIDO" : "TICKET DE APARTADO");
   lines.push(
     { kind: "text", text: `Folio: ${l.folio}`, align: "center" },
-    { kind: "text", text: `Aparta: ${l.customerName}`, bold: true },
+    {
+      kind: "text",
+      text: `${isPedido ? "Pedido de" : "Aparta"}: ${l.customerName}`,
+      bold: true,
+    },
     { kind: "text", text: `Fecha: ${formatTicketDate(l.date)}` },
     { kind: "text", text: `Hora:  ${formatTicketTime(l.date)}` },
     { kind: "rule", char: "-" }
@@ -134,20 +162,20 @@ export function layawayTicketLines(l: LayawayTicketData): TicketLine[] {
     { kind: "row", left: "SALDO:", right: money(balance), bold: true },
     { kind: "rule", char: "=" }
   );
-  for (const t of LAYAWAY_FOOTER) {
+  for (const t of isPedido ? PEDIDO_FOOTER : LAYAWAY_FOOTER) {
     lines.push({ kind: "text", text: t, align: "center" });
   }
   return lines;
 }
 
 export function linesToEscPos(lines: TicketLine[]): Uint8Array {
-  const b = new EscPosBuilder().init80();
+  const b = new EscPosBuilder().init80().feed(TOP_FEED_LINES);
   for (const l of lines) {
     if (l.kind === "rule") b.rule(l.char);
     else if (l.kind === "row") b.row(l.left, l.right, { bold: l.bold });
     else b.line(l.text, { align: l.align, bold: l.bold });
   }
-  return b.align("left").bold(false).feed(4).cut().build();
+  return b.align("left").bold(false).feed(BOTTOM_FEED_LINES).cut().build();
 }
 
 export const buildSaleTicket = (sale: SaleTicketData) =>

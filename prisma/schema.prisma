@@ -32,8 +32,64 @@ model Product {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   saleItems        SaleItem[]
+  prices           ProductPrice[]
 
   @@map("products")
+}
+
+// Precio de un producto en un año. Cada año tiene su propia fila: no se sobrescribe el anterior.
+model ProductPrice {
+  id               String   @id @default(uuid())
+  productId        String   @map("product_id")
+  year             Int
+  precioMenudeo    Decimal  @db.Decimal(10, 2)
+  precioMayoreo    Decimal  @db.Decimal(10, 2)
+  precioProduccion Decimal? @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, year])
+  @@map("product_prices")
+}
+
+// Extras que se pueden agregar a una corona de un pedido. Qué extras se ofrecen y a qué precio
+// cambia por año (ver AddonPrice); aquí solo vive su identidad.
+model AddonDef {
+  id     String     @id @default(uuid())
+  key    String     @unique @db.VarChar(60)
+  name   String     @db.VarChar(60)
+  group  AddonGroup
+  orden  Int        @default(0)
+
+  @@map("addon_defs")
+}
+
+// Precio de un extra (pata, ramo, imagen) en un año
+model AddonPrice {
+  id        String   @id @default(uuid())
+  key       String   @db.VarChar(60)
+  year      Int
+  name      String   @db.VarChar(60)
+  price     Decimal  @db.Decimal(10, 2)
+  // false = ese año ya no se ofrece
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, year])
+  @@map("addon_prices")
+}
+
+// Colores que se ofrecen al hacer un pedido
+model ColorOption {
+  id     String  @id @default(uuid())
+  name   String  @unique @db.VarChar(50)
+  activo Boolean @default(true)
+  orden  Int     @default(0)
+
+  @@map("color_options")
 }
 
 model Sale {
@@ -104,6 +160,9 @@ model Layaway {
   total         Decimal         @db.Decimal(10, 2)
   deposit       Decimal         @db.Decimal(10, 2)
   status        LayawayStatus   @default(activo)
+  kind          LayawayKind     @default(apartado)
+  // Etapa de elaboración; solo se usa en los pedidos
+  production    ProductionStatus @default(por_procesar)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   items         LayawayItem[]
@@ -121,9 +180,32 @@ model LayawayItem {
   unitPrice   Decimal @db.Decimal(10, 2)
   totalPrice  Decimal @db.Decimal(10, 2)
 
+  // Datos del pedido (solo cuando kind = pedido)
+  color       String? @db.VarChar(100)
+  flores      String? @db.VarChar(200)
+  imagenDesc  String? @db.VarChar(200)
+  cromoDesc   String? @db.VarChar(200)
+
   layaway     Layaway @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+  addons      LayawayItemAddon[]
 
   @@map("layaway_items")
+}
+
+// Extra agregado a una corona del pedido (pata, ramo, imagen) con su precio al momento
+model LayawayItemAddon {
+  id     String      @id @default(uuid())
+  itemId String      @map("item_id")
+  key    String      @db.VarChar(60)
+  name   String      @db.VarChar(60)
+  // Para los ramos: qué flores lleva ese ramo
+  detail String?     @db.VarChar(200)
+  price  Decimal     @db.Decimal(10, 2)
+
+  item   LayawayItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@map("layaway_item_addons")
 }
 
 model LayawayPayment {
@@ -135,6 +217,29 @@ model LayawayPayment {
   layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
 
   @@map("layaway_payments")
+}
+
+enum AddonGroup {
+  extra
+  imagen
+  ramo
+
+  @@map("addon_group_enum")
+}
+
+enum ProductionStatus {
+  por_procesar
+  procesando
+  listo
+
+  @@map("production_status_enum")
+}
+
+enum LayawayKind {
+  apartado
+  pedido
+
+  @@map("layaway_kind_enum")
 }
 
 enum LayawayStatus {

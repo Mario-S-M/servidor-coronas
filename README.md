@@ -225,3 +225,14 @@ mientras use el runner propio. En Settings > Actions > General conviene exigir a
 
 Volver a la versión anterior (en la Raspberry):
 `docker tag servidor-coronas-app:previous servidor-coronas-app:latest && docker compose up -d --no-build --no-deps app`
+
+## Precios por año, apartados y pedidos
+
+- `/precios-anuales`: cada año guarda sus propios precios de productos (menudeo, mayoreo, producción) y de los extras
+  de los pedidos (pata, ramo, imagen chica/mediana/grande). Cambiar un precio solo afecta a ese año; los tickets
+  ya hechos conservan el precio con el que se vendieron. También se editan ahí los colores que se ofrecen.
+- Si un año aún no tiene precios, se usan los del año anterior y la pantalla lo marca. Puedes copiarlos de otro año
+  o recuperar los de un año pasado a partir de los tickets (el precio que más se vendió de cada producto).
+- `/apartados`: pestañas Apartados y Pedidos. Cada corona de un pedido guarda por separado su color, flores, imagen,
+  cromo y los extras con el precio que tenían ese día. Se puede filtrar por extra y por año.
+- `/historial` muestra ventas, apartados y pedidos juntos, con filtro por tipo y por año.

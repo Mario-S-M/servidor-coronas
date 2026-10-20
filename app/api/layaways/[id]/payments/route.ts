@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { serializeLayaway } from "@/lib/layaways";
+import { layawayInclude, serializeLayaway } from "@/lib/layaways";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: Params) {
 
     const current = await prisma.layaway.findUnique({
       where: { id },
-      include: { items: true, payments: true },
+      include: layawayInclude,
     });
     if (!current) {
       return NextResponse.json(
@@ -50,7 +50,7 @@ export async function POST(request: Request, { params }: Params) {
     });
     const updated = await prisma.layaway.findUniqueOrThrow({
       where: { id },
-      include: { items: true, payments: true },
+      include: layawayInclude,
     });
     return NextResponse.json(serializeLayaway(updated), { status: 201 });
   } catch (error) {

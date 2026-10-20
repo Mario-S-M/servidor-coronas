@@ -31,7 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <div className="flex min-h-screen h-screen bg-white dark:bg-black overflow-hidden transition-colors">
+          <div className="flex min-h-dvh h-dvh bg-white dark:bg-black overflow-hidden transition-colors">
             <Sidebar />
             <main className="flex-1 overflow-y-auto overflow-x-hidden w-full bg-white dark:bg-black">
               <div className="min-h-full pt-14 lg:pt-0">{children}</div>

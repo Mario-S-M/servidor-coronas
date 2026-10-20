@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { currentYear, resolveProductPrices, saveProductPrice } from "@/lib/pricing";
 
 const createProductSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
@@ -23,12 +24,29 @@ function generateProductId(nombre: string): string {
 
 export async function GET() {
   try {
-    const products = await prisma.product.findMany({
-      where: { activo: true },
-      orderBy: { categoria: "asc" },
-    });
+    const [products, prices] = await Promise.all([
+      prisma.product.findMany({
+        where: { activo: true },
+        orderBy: { categoria: "asc" },
+      }),
+      resolveProductPrices(currentYear()),
+    ]);
+    const byId = new Map(prices.map((p) => [p.id, p]));
 
-    return NextResponse.json(products);
+    // Los precios son los del año en curso; las ventas viejas conservan los suyos
+    return NextResponse.json(
+      products.map((p) => {
+        const price = byId.get(p.id);
+        return price
+          ? {
+              ...p,
+              precioMenudeo: price.precioMenudeo,
+              precioMayoreo: price.precioMayoreo,
+              precioProduccion: price.precioProduccion ?? Number(p.precioProduccion),
+            }
+          : p;
+      })
+    );
   } catch (error) {
     console.error("Error al obtener productos:", error);
     return NextResponse.json(
@@ -82,6 +100,14 @@ export async function POST(request: Request) {
         precioProduccion: validatedData.precioProduccion,
         activo: true,
       },
+    });
+
+    await saveProductPrice({
+      productId: product.id,
+      year: currentYear(),
+      precioMenudeo: validatedData.precioMenudeo,
+      precioMayoreo: validatedData.precioMayoreo,
+      precioProduccion: validatedData.precioProduccion,
     });
 
     return NextResponse.json(product);

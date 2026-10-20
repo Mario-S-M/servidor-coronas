@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
-import { serializeLayaway } from "@/lib/layaways";
+import { layawayInclude, serializeLayaway } from "@/lib/layaways";
 
 type Params = { params: Promise<{ id: string }> };
 
-const patchSchema = z.object({
-  status: z.enum(["activo", "entregado", "cancelado"]),
-});
+const patchSchema = z
+  .object({
+    status: z.enum(["activo", "entregado", "cancelado"]).optional(),
+    production: z.enum(["por_procesar", "procesando", "listo"]).optional(),
+  })
+  .refine((d) => d.status || d.production, "Nada que actualizar");
 
 export async function GET(_request: Request, { params }: Params) {
   const { id } = await params;
   try {
     const layaway = await prisma.layaway.findUnique({
       where: { id },
-      include: { items: true, payments: true },
+      include: layawayInclude,
     });
     if (!layaway) {
       return NextResponse.json(
@@ -39,10 +42,25 @@ export async function PATCH(request: Request, { params }: Params) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
     }
+    if (parsed.data.production) {
+      const current = await prisma.layaway.findUnique({
+        where: { id },
+        select: { kind: true },
+      });
+      if (current?.kind !== "pedido") {
+        return NextResponse.json(
+          { error: "Solo los pedidos tienen etapa de producción" },
+          { status: 400 }
+        );
+      }
+    }
     const layaway = await prisma.layaway.update({
       where: { id },
-      data: { status: parsed.data.status },
-      include: { items: true, payments: true },
+      data: {
+        ...(parsed.data.status && { status: parsed.data.status }),
+        ...(parsed.data.production && { production: parsed.data.production }),
+      },
+      include: layawayInclude,
     });
     return NextResponse.json(serializeLayaway(layaway));
   } catch (error) {

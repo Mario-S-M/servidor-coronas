@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
+import { currentYear, saveProductPrice } from "@/lib/pricing";
 
 const updateProductSchema = z.object({
   nombre: z.string().optional(),
@@ -45,6 +46,15 @@ export async function PUT(
         precioProduccion: validatedData.precioProduccion,
         ...(validatedData.categoria && { categoria: validatedData.categoria }),
       },
+    });
+
+    // Editar aquí cambia el precio del año en curso; los años anteriores no se tocan
+    await saveProductPrice({
+      productId: id,
+      year: currentYear(),
+      precioMenudeo: validatedData.precioMenudeo,
+      precioMayoreo: validatedData.precioMayoreo,
+      precioProduccion: validatedData.precioProduccion,
     });
 
     return NextResponse.json(product);

@@ -1,6 +1,8 @@
 // Comandos ESC/POS portados de zapateria_flutter/lib/services/esc_pos.dart
 
-export const COLS = 32;
+import { PRINT_COLUMNS } from "./business-config";
+
+export const COLS = PRINT_COLUMNS;
 
 const ESC = 0x1b;
 const GS = 0x1d;

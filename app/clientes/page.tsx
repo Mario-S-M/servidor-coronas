@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPhoneNumber } from "@/lib/utils";
+import { Pagination, usePagination } from "@/components/pagination";
 
 interface Sale {
   id: string;
@@ -39,6 +40,7 @@ interface Customer {
 
 export default function ClientesPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const pg = usePagination(customers, "clientes");
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -253,7 +255,7 @@ export default function ClientesPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-            {customers.map((customer) => (
+            {pg.pageItems.map((customer) => (
               <Card
                 key={customer.id}
                 className="hover:shadow-lg transition-shadow border-black dark:border-white bg-white dark:bg-black"
@@ -358,6 +360,7 @@ export default function ClientesPage() {
             ))}
           </div>
         )}
+        {customers.length > 0 && <Pagination {...pg} />}
 
         {/* Diálogo para agregar nuevo cliente */}
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

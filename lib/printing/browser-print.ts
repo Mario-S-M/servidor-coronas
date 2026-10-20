@@ -8,7 +8,7 @@ export function printWithBrowser(lines: TicketLine[]) {
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ticket</title>
 <style>
 @page { size: 80mm auto; margin: 3mm; }
-body { margin: 0; font-family: "Courier New", monospace; font-size: 9pt; }
+body { margin: 0; font-family: "Courier New", monospace; font-size: 7pt; }
 pre { margin: 0; white-space: pre; }
 </style></head><body><pre>${escapeHtml(linesToPlainText(lines))}</pre></body></html>`;
 

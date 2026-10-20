@@ -13,6 +13,13 @@ import { useEffect, useState } from "react";
 import { Receipt, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PrintButton } from "@/components/print-button";
+import { LayawayCard } from "@/components/layaways/layaway-card";
+import { LayawayDetail } from "@/components/layaways/layaway-detail";
+import { KindChip } from "@/components/layaways/ui";
+import type { LayawayDTO } from "@/lib/layaways";
+import { cn } from "@/lib/utils";
+import { Pagination, usePagination } from "@/components/pagination";
+import { THIS_YEAR, YearSelect } from "@/components/year-select";
 import { saleTicketLines } from "@/lib/printing/tickets";
 
 interface SaleItem {
@@ -56,14 +63,27 @@ export default function HistorialPage() {
   const [editedItems, setEditedItems] = useState<SaleItem[]>([]);
   const [editedType, setEditedType] = useState<string>("menudeo");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [layaways, setLayaways] = useState<LayawayDTO[]>([]);
+  const [year, setYear] = useState(THIS_YEAR);
+  const [kindFilter, setKindFilter] = useState<
+    "todos" | "venta" | "apartado" | "pedido"
+  >("todos");
+  const [selectedLayaway, setSelectedLayaway] = useState<LayawayDTO | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [salesRes, productsRes] = await Promise.all([
+        const [salesRes, productsRes, layawaysRes] = await Promise.all([
           fetch("/api/sales"),
           fetch("/api/products"),
+          fetch("/api/layaways"),
         ]);
+
+        if (layawaysRes.ok) {
+          setLayaways(await layawaysRes.json());
+        }
 
         if (salesRes.ok) {
           const data = await salesRes.json();
@@ -238,6 +258,7 @@ export default function HistorialPage() {
 
   // Filtrar ventas según el término de búsqueda
   const filteredSales = sales.filter((sale) => {
+    if (new Date(sale.createdAt).getFullYear() !== year) return false;
     if (!searchTerm.trim()) return true;
 
     const searchLower = searchTerm.toLowerCase().trim();
@@ -258,13 +279,57 @@ export default function HistorialPage() {
     return false;
   });
 
+  const searchLower = searchTerm.toLowerCase().trim();
+  const filteredLayaways = layaways.filter(
+    (l) =>
+      new Date(l.createdAt).getFullYear() === year &&
+      (!searchLower ||
+      l.folio.toLowerCase().includes(searchLower) ||
+      l.customerName.toLowerCase().includes(searchLower))
+  );
+
+  type Entry =
+    | { type: "venta"; date: number; sale: Sale }
+    | { type: "layaway"; date: number; layaway: LayawayDTO };
+
+  const entries: Entry[] = [
+    ...(kindFilter === "todos" || kindFilter === "venta"
+      ? filteredSales.map(
+          (sale): Entry => ({
+            type: "venta",
+            date: +new Date(sale.createdAt),
+            sale,
+          })
+        )
+      : []),
+    ...filteredLayaways
+      .filter((l) => kindFilter === "todos" || l.kind === kindFilter)
+      .map(
+        (layaway): Entry => ({
+          type: "layaway",
+          date: +new Date(layaway.createdAt),
+          layaway,
+        })
+      ),
+  ].sort((a, b) => b.date - a.date);
+
+  const pg = usePagination(
+    entries,
+    [kindFilter, year, searchTerm].join("|")
+  );
+
+  const KIND_FILTERS = [
+    { value: "todos", label: "Todo" },
+    { value: "venta", label: "Ventas" },
+    { value: "apartado", label: "Apartados" },
+    { value: "pedido", label: "Pedidos" },
+  ] as const;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-center mb-8">
-            Historial de Ventas
-          </h1>
+          <h1 className="text-3xl font-bold text-center mb-8">Historial</h1>
           <div className="text-center">Cargando...</div>
         </div>
       </div>
@@ -274,9 +339,30 @@ export default function HistorialPage() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Historial de Ventas
-        </h1>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <h1 className="text-3xl font-bold">Historial</h1>
+          <YearSelect value={year} onChange={setYear} />
+        </div>
+
+        {/* Filtro por tipo */}
+        <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          {KIND_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              aria-pressed={kindFilter === f.value}
+              onClick={() => setKindFilter(f.value)}
+              className={cn(
+                "h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition active:scale-95",
+                kindFilter === f.value
+                  ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
+                  : "border-zinc-300 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-black dark:text-zinc-200"
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
 
         {/* Barra de búsqueda */}
         <div className="mb-6">
@@ -284,7 +370,7 @@ export default function HistorialPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar por ID de ticket o nombre del cliente..."
+              placeholder="Buscar por ticket, folio o nombre"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
@@ -292,32 +378,41 @@ export default function HistorialPage() {
           </div>
           {searchTerm && (
             <p className="text-sm text-muted-foreground mt-2">
-              {filteredSales.length} resultado
-              {filteredSales.length !== 1 ? "s" : ""} encontrado
-              {filteredSales.length !== 1 ? "s" : ""}
+              {entries.length} resultado
+              {entries.length !== 1 ? "s" : ""} encontrado
+              {entries.length !== 1 ? "s" : ""}
             </p>
           )}
         </div>
 
-        {filteredSales.length === 0 ? (
+        {entries.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
               <p className="text-muted-foreground">
                 {searchTerm
-                  ? "No se encontraron ventas que coincidan con la búsqueda"
-                  : "No hay ventas registradas"}
+                  ? "No se encontró nada que coincida con la búsqueda"
+                  : "No hay registros de este tipo"}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {filteredSales.map((sale) => (
+            {pg.pageItems.map((entry) =>
+              entry.type === "layaway" ? (
+                <LayawayCard
+                  key={entry.layaway.id}
+                  layaway={entry.layaway}
+                  onOpen={() => setSelectedLayaway(entry.layaway)}
+                />
+              ) : (
+              ((sale: Sale) => (
               <Card key={sale.id}>
                 <CardHeader className="pb-3">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center gap-2">
                     <CardTitle className="text-lg">
                       {sale.ticketNumber}
                     </CardTitle>
+                    <KindChip kind="venta" className="ml-auto" />
                     <Badge
                       variant={
                         sale.type === "menudeo" ? "default" : "secondary"
@@ -328,7 +423,7 @@ export default function HistorialPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-center gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <div className="flex-1 space-y-1">
                       {sale.customerName && (
                         <p className="text-sm font-semibold text-foreground">
@@ -349,11 +444,11 @@ export default function HistorialPage() {
                         })}
                       </p>
                     </div>
-                    <div className="text-right space-y-2">
+                    <div className="space-y-2 sm:text-right">
                       <p className="text-2xl font-bold">
                         ${sale.total.toFixed(2)}
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 sm:justify-end">
                         <Button
                           variant="outline"
                           size="sm"
@@ -382,8 +477,28 @@ export default function HistorialPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              ))(entry.sale)
+              )
+            )}
+            <Pagination {...pg} />
           </div>
+        )}
+
+        {selectedLayaway && (
+          <LayawayDetail
+            layaway={selectedLayaway}
+            onClose={() => setSelectedLayaway(null)}
+            onChange={(updated) => {
+              setSelectedLayaway(updated);
+              setLayaways((ls) =>
+                ls.map((l) => (l.id === updated.id ? updated : l))
+              );
+            }}
+            onDeleted={() => {
+              setLayaways((ls) => ls.filter((l) => l.id !== selectedLayaway.id));
+              setSelectedLayaway(null);
+            }}
+          />
         )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
