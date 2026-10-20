@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { SaleTicketData } from "@/lib/printing/tickets";
 
 export interface ProductItem {
   id: string;
@@ -36,7 +37,7 @@ interface ProductStore {
   }>;
   resetAllProducts: () => void;
   setMode: (mode: StoreMode) => void;
-  saveSale: () => Promise<void>;
+  saveSale: () => Promise<SaleTicketData | null>;
   loadProductsFromDB: () => Promise<void>;
 }
 
@@ -130,7 +131,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       (product) => product.cantidad > 0
     );
 
-    if (itemsWithQuantity.length === 0) return;
+    if (itemsWithQuantity.length === 0) return null;
 
     // Validación para mayoreo: nombre y teléfono son obligatorios
     if (mode === StoreMode.MAYOREO) {
@@ -140,7 +141,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           description:
             "El nombre del cliente es obligatorio para ventas de mayoreo",
         });
-        return;
+        return null;
       }
       const phoneNumbers = customerPhone.replace(/\D/g, "");
       if (!phoneNumbers || phoneNumbers.length !== 10) {
@@ -149,7 +150,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           description:
             "El teléfono debe tener 10 dígitos para ventas de mayoreo",
         });
-        return;
+        return null;
       }
     }
 
@@ -198,6 +199,18 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         console.log("Venta guardada exitosamente");
         const { toast } = await import("sonner");
         toast.success("Venta guardada exitosamente");
+        return {
+          ticketNumber: saleData.ticketNumber,
+          date: new Date(),
+          customerName: saleData.customerName,
+          total: saleData.total,
+          items: saleData.items.map((item) => ({
+            name: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice,
+          })),
+        };
       } else {
         const errorData = await response.json();
         console.error("Error al guardar la venta:", errorData);
@@ -205,6 +218,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         toast.error("Error al guardar la venta", {
           description: errorData.error || "Error desconocido",
         });
+        return null;
       }
     } catch (error) {
       console.error("Error al guardar la venta:", error);
@@ -212,6 +226,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       toast.error("Error al guardar la venta", {
         description: "No se pudo conectar con el servidor",
       });
+      return null;
     }
   },
 

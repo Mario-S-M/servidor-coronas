@@ -3,9 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2, User, Phone } from "lucide-react";
+import { useState } from "react";
 import { useProductStore } from "@/lib/store";
+import { PrintButton } from "@/components/print-button";
+import { saleTicketLines, type SaleTicketData } from "@/lib/printing/tickets";
 
 export function Ticket() {
+  const [savedSale, setSavedSale] = useState<SaleTicketData | null>(null);
   const {
     getTicketItems,
     getTotalAmount,
@@ -32,6 +36,35 @@ export function Ticket() {
   const totalGeneral = getTotalAmount();
   const totalItems = getTotalItems();
   const ticketNumber = `#${String(Date.now()).slice(-6)}`;
+
+  if (itemsWithQuantity.length === 0 && savedSale) {
+    return (
+      <Card className="w-full shadow-lg border-2 border-black dark:border-white bg-white dark:bg-black">
+        <CardHeader className="text-center border-b bg-black dark:bg-white text-white dark:text-black p-3 sm:p-6">
+          <CardTitle className="text-base sm:text-lg font-bold">
+            VENTA GUARDADA
+          </CardTitle>
+          <p className="text-xs sm:text-sm font-medium">
+            Ticket {savedSale.ticketNumber}
+          </p>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 space-y-3">
+          <p className="text-center text-sm font-semibold text-black dark:text-white">
+            Total: ${savedSale.total.toFixed(2)}
+          </p>
+          <PrintButton lines={saleTicketLines(savedSale)} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSavedSale(null)}
+            className="w-full"
+          >
+            Nueva venta
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (itemsWithQuantity.length === 0) {
     return (
@@ -169,7 +202,9 @@ export function Ticket() {
             size="sm"
             onClick={async () => {
               const { saveSale } = useProductStore.getState();
-              await saveSale();
+              const sale = await saveSale();
+              if (!sale) return;
+              setSavedSale(sale);
               resetAllProducts();
             }}
             className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white text-sm sm:text-base py-2 sm:py-3"

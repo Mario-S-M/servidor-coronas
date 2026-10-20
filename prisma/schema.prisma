@@ -96,6 +96,55 @@ model CashCut {
   @@map("cash_cuts")
 }
 
+model Layaway {
+  id            String          @id @default(uuid())
+  folio         String          @unique @db.VarChar(20)
+  customerName  String          @db.VarChar(100)
+  customerPhone String?         @db.VarChar(20)
+  total         Decimal         @db.Decimal(10, 2)
+  deposit       Decimal         @db.Decimal(10, 2)
+  status        LayawayStatus   @default(activo)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  items         LayawayItem[]
+  payments      LayawayPayment[]
+
+  @@map("layaways")
+}
+
+model LayawayItem {
+  id          String  @id @default(uuid())
+  layawayId   String  @map("layaway_id")
+  productId   String  @map("product_id")
+  productName String  @db.VarChar(100)
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalPrice  Decimal @db.Decimal(10, 2)
+
+  layaway     Layaway @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+
+  @@map("layaway_items")
+}
+
+model LayawayPayment {
+  id        String   @id @default(uuid())
+  layawayId String   @map("layaway_id")
+  amount    Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  layaway   Layaway  @relation(fields: [layawayId], references: [id], onDelete: Cascade)
+
+  @@map("layaway_payments")
+}
+
+enum LayawayStatus {
+  activo
+  entregado
+  cancelado
+
+  @@map("layaway_status_enum")
+}
+
 enum SaleType {
   menudeo
   mayoreo

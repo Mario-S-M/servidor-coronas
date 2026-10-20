@@ -12,6 +12,8 @@ import {
 import { useEffect, useState } from "react";
 import { Receipt, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { PrintButton } from "@/components/print-button";
+import { saleTicketLines } from "@/lib/printing/tickets";
 
 interface SaleItem {
   id: string;
@@ -520,6 +522,23 @@ export default function HistorialPage() {
                   <p className="font-semibold">Gracias por su preferencia</p>
                   <p className="mt-1 font-medium">¡Que tenga un buen día!</p>
                 </div>
+
+                <PrintButton
+                  className="mt-3"
+                  label="Reimprimir ticket"
+                  lines={saleTicketLines({
+                    ticketNumber: selectedSale.ticketNumber,
+                    date: new Date(selectedSale.createdAt),
+                    customerName: selectedSale.customerName,
+                    total: selectedSale.total,
+                    items: (selectedSale.items ?? []).map((item) => ({
+                      name: item.productName,
+                      quantity: item.quantity,
+                      unitPrice: item.unitPrice,
+                      totalPrice: item.totalPrice,
+                    })),
+                  })}
+                />
               </div>
             )}
           </DialogContent>

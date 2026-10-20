@@ -17,6 +17,7 @@ import {
   BarChart3,
   Users,
   FileBarChart2,
+  PackageCheck,
 } from "lucide-react";
 
 const navigation = [
@@ -34,6 +35,11 @@ const navigation = [
     name: "Ventas Mayoreo",
     href: "/mayoreo",
     icon: Store,
+  },
+  {
+    name: "Apartados",
+    href: "/apartados",
+    icon: PackageCheck,
   },
   {
     name: "Clientes Mayoreo",

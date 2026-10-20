@@ -194,3 +194,14 @@ Mario S.M.
 ---
 
 **¿Necesitas ayuda?** Revisa la documentación en la carpeta raíz o abre un issue.
+
+## Impresión de tickets (impresora térmica Bluetooth)
+
+Los tickets de venta y de apartado se imprimen desde el navegador con Web Bluetooth (BLE, papel de 80 mm, con autocorte).
+
+- Requiere **Chrome en Android** (o Chrome/Edge en PC). No funciona en Safari/iOS.
+- Web Bluetooth necesita contexto seguro. Si la app se abre por `http://IP:3001`, en Chrome Android entra a
+  `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, agrega la URL de la app y reinicia Chrome.
+- La impresora debe ser **BLE**. Si solo tiene Bluetooth clásico, usa "Imprimir con el navegador".
+- Los datos del negocio del ticket están en `lib/printing/business-config.ts`.
+- Los apartados se consultan en `/apartados`. Tras actualizar el código corre `npx prisma db push` para crear las tablas.
