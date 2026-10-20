@@ -205,3 +205,23 @@ Los tickets de venta y de apartado se imprimen desde el navegador con Web Blueto
 - La impresora debe ser **BLE**. Si solo tiene Bluetooth clásico, usa "Imprimir con el navegador".
 - Los datos del negocio del ticket están en `lib/printing/business-config.ts`.
 - Los apartados se consultan en `/apartados`. Tras actualizar el código corre `npx prisma db push` para crear las tablas.
+
+## Despliegue automático (GitHub Actions)
+
+Cada push a `main` (`.github/workflows/deploy.yml`) construye la imagen `linux/arm64` en la Mac
+con un runner propio, la manda por SSH a la Raspberry y reinicia solo el contenedor `coronas_app`.
+Postgres no se toca. Si la app no responde en `/api/health`, el job falla y muestra los logs;
+la imagen anterior queda como `servidor-coronas-app:previous`.
+
+Requisitos en la Mac:
+1. Docker Desktop abierto (que arranque al iniciar sesión).
+2. Runner instalado: GitHub > Settings > Actions > Runners > New self-hosted runner (macOS, ARM64).
+   Después de `./config.sh ...` ejecutar `./svc.sh install && ./svc.sh start` para que corra como servicio.
+3. Acceso SSH sin contraseña a la Raspberry (`ssh rasp@raspberrypi.local`).
+
+Opcional: variables `DEPLOY_HOST`, `DEPLOY_USER` y `DEPLOY_DIR` en Settings > Secrets and variables > Actions.
+El repo es público: el workflow solo corre con push a `main`; no agregues disparadores `pull_request`
+mientras use el runner propio. En Settings > Actions > General conviene exigir aprobación para PRs de colaboradores externos.
+
+Volver a la versión anterior (en la Raspberry):
+`docker tag servidor-coronas-app:previous servidor-coronas-app:latest && docker compose up -d --no-build --no-deps app`

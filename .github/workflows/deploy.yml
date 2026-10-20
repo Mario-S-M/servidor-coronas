@@ -1,0 +1,91 @@
+name: Deploy a Raspberry
+
+# Construye la imagen linux/arm64 en la Mac (runner propio) y la manda por SSH
+# a la Raspberry. Solo se dispara con push a main: el repo es público y un
+# runner propio nunca debe ejecutar código de pull requests ni de forks.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".gitignore"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-raspberry
+  cancel-in-progress: false
+
+env:
+  # Se pueden cambiar en Settings > Secrets and variables > Actions > Variables
+  DEPLOY_HOST: ${{ vars.DEPLOY_HOST || 'raspberrypi.local' }}
+  DEPLOY_USER: ${{ vars.DEPLOY_USER || 'rasp' }}
+  DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/home/rasp/Servidor/servidor-coronas' }}
+  # Nombre que genera docker compose en la Raspberry (proyecto + servicio)
+  IMAGE: servidor-coronas-app
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar PATH de Docker
+        run: echo "/usr/local/bin" >> "$GITHUB_PATH"
+
+      - name: Verificar Docker
+        run: docker info --format '{{.ServerVersion}}'
+
+      - name: Construir imagen linux/arm64
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --tag "$IMAGE:${GITHUB_SHA::7}" \
+            --load .
+
+      - name: Verificar acceso SSH a la Raspberry
+        run: |
+          ssh -o BatchMode=yes -o ConnectTimeout=10 \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'echo conectado a $(hostname)'
+
+      - name: Enviar imagen a la Raspberry
+        run: |
+          docker save "$IMAGE:${GITHUB_SHA::7}" | gzip \
+            | ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'gunzip | docker load'
+
+      - name: Reiniciar la app en la Raspberry
+        run: |
+          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+            "IMAGE=$IMAGE SHA=${GITHUB_SHA::7} DEPLOY_DIR=$DEPLOY_DIR bash -s" <<'REMOTE'
+          set -eu
+          # Guardar la imagen actual para poder volver atrás
+          if docker image inspect "$IMAGE:latest" >/dev/null 2>&1; then
+            docker tag "$IMAGE:latest" "$IMAGE:previous"
+          fi
+          docker tag "$IMAGE:$SHA" "$IMAGE:latest"
+          cd "$DEPLOY_DIR"
+          # Solo la app: no se toca Postgres ni Adminer
+          docker compose up -d --no-build --no-deps app
+          REMOTE
+
+      - name: Esperar a que la app responda
+        run: |
+          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/api/health || true)
+            if [ "$code" = "200" ]; then
+              echo "App arriba (intento $i)"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "La app no respondió. Últimos logs:"
+          docker logs --tail 40 coronas_app
+          exit 1
+          REMOTE
+
+      - name: Limpiar imágenes viejas
+        if: success()
+        run: |
+          docker image prune -f >/dev/null
+          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'docker image prune -f >/dev/null'
