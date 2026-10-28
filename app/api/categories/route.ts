@@ -3,8 +3,31 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 // GET - Obtener todas las categorías activas
+// Los productos guardan la categoría como texto: si la tabla de categorías quedó vacía o
+// incompleta (p. ej. base creada sin seed), se crean las que los productos ya usan.
+async function ensureProductCategories() {
+  const [used, existing] = await Promise.all([
+    prisma.product.findMany({
+      where: { activo: true },
+      distinct: ["categoria"],
+      select: { categoria: true },
+    }),
+    prisma.category.findMany({ select: { nombre: true, orden: true } }),
+  ]);
+  const known = new Set(existing.map((c) => c.nombre));
+  const missing = used.map((p) => p.categoria).filter((n) => !known.has(n));
+  if (missing.length === 0) return;
+
+  const nextOrden = existing.reduce((max, c) => Math.max(max, c.orden), -1) + 1;
+  await prisma.category.createMany({
+    data: missing.map((nombre, i) => ({ nombre, orden: nextOrden + i })),
+    skipDuplicates: true,
+  });
+}
+
 export async function GET() {
   try {
+    await ensureProductCategories();
     const categories = await prisma.category.findMany({
       where: { activo: true },
       orderBy: { orden: "asc" },
