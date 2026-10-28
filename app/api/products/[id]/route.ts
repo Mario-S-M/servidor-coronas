@@ -7,8 +7,9 @@ import { currentYear, saveProductPrice } from "@/lib/pricing";
 const updateProductSchema = z.object({
   nombre: z.string().optional(),
   precioMenudeo: z.number().positive(),
-  precioMayoreo: z.number().positive(),
-  precioProduccion: z.number().positive(),
+  // Mayoreo y producción pueden quedar en 0 mientras se capturan
+  precioMayoreo: z.number().nonnegative(),
+  precioProduccion: z.number().nonnegative(),
   categoria: z.string().optional(),
 });
 

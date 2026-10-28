@@ -40,6 +40,38 @@ interface ProductsByCategory {
   [key: string]: Product[];
 }
 
+/** Campo de precio para teléfono: etiqueta arriba, letra de 16px (evita el zoom de iOS) y área grande. */
+function PriceField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block min-w-0">
+      <span className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        {label}
+      </span>
+      <div className="flex h-11 items-center rounded-xl border border-zinc-300 bg-white px-2 focus-within:ring-2 focus-within:ring-black dark:border-zinc-700 dark:bg-black dark:focus-within:ring-white">
+        <span className="text-sm text-zinc-500">$</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.01"
+          min="0"
+          value={value}
+          onFocus={(e) => e.currentTarget.select()}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full min-w-0 bg-transparent pl-1 text-base font-semibold tabular-nums text-black outline-none dark:text-white"
+        />
+      </div>
+    </label>
+  );
+}
+
 export default function PreciosPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -334,7 +366,8 @@ export default function PreciosPage() {
         setIsEditDialogOpen(false);
         setSelectedProduct(null);
       } else {
-        toast.error("Error al actualizar producto");
+        const data = await response.json().catch(() => null);
+        toast.error(data?.error || "Error al actualizar producto");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -406,7 +439,7 @@ export default function PreciosPage() {
   }
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 lg:p-8 bg-white dark:bg-black">
+    <div className="min-h-screen p-3 pb-28 sm:p-4 sm:pb-4 md:p-6 lg:p-8 bg-white dark:bg-black">
       <div className="max-w-6xl mx-auto">
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -421,12 +454,12 @@ export default function PreciosPage() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
               <Button
                 onClick={() => setIsCategoryDialogOpen(true)}
                 variant="outline"
                 size="sm"
-                className="flex items-center justify-center gap-2 text-xs sm:text-sm border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900"
+                className="h-11 sm:h-8 flex items-center justify-center gap-2 text-sm border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900"
               >
                 <FolderPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Gestionar Categorías</span>
@@ -436,21 +469,24 @@ export default function PreciosPage() {
                 onClick={() => setIsAddDialogOpen(true)}
                 variant="outline"
                 size="sm"
-                className="flex items-center justify-center gap-2 text-xs sm:text-sm border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900"
+                className="h-11 sm:h-8 flex items-center justify-center gap-2 text-sm border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900"
               >
                 <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Agregar Producto</span>
                 <span className="sm:hidden">Agregar</span>
               </Button>
-              <Button
-                onClick={saveAllPrices}
-                disabled={saving}
-                size="sm"
-                className="flex items-center justify-center gap-2 text-xs sm:text-sm bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-              >
-                <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                {saving ? "Guardando..." : "Guardar"}
-              </Button>
+              {/* Teléfono: barra fija abajo para no perder el botón al bajar por la lista */}
+              <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 p-3 backdrop-blur dark:border-zinc-800 dark:bg-black/95 sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                <Button
+                  onClick={saveAllPrices}
+                  disabled={saving}
+                  size="sm"
+                  className="h-12 w-full flex items-center justify-center gap-2 text-base sm:h-8 sm:w-auto sm:text-sm bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? "Guardando..." : "Guardar precios"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -460,16 +496,77 @@ export default function PreciosPage() {
             ([categoria, categoryProducts]) => (
               <Card
                 key={categoria}
-                className="border-black dark:border-white bg-white dark:bg-black"
+                className="gap-1 border-zinc-300 bg-white py-3 dark:border-zinc-700 dark:bg-black sm:gap-6 sm:border-black sm:py-6 sm:dark:border-white"
               >
-                <CardHeader className="pb-3 sm:pb-6">
-                  <CardTitle className="text-base sm:text-lg text-black dark:text-white">
+                <CardHeader className="px-3 pb-1 sm:px-6 sm:pb-6">
+                  <CardTitle className="flex items-baseline justify-between text-lg text-black dark:text-white">
                     {categoryTitles[categoria] || categoria}
+                    <span className="text-xs font-normal text-zinc-500 sm:hidden">
+                      {categoryProducts.length}{" "}
+                      {categoryProducts.length === 1 ? "producto" : "productos"}
+                    </span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 sm:p-4 md:p-6">
-                  <div className="overflow-x-auto -mx-2 sm:mx-0">
-                    <table className="w-full min-w-[600px] sm:min-w-full">
+                <CardContent className="px-2 sm:p-4 md:p-6">
+                  {/* Teléfono: una tarjeta por producto, sin scroll lateral */}
+                  <ul className="space-y-2.5 sm:hidden">
+                    {categoryProducts.map((product) => (
+                      <li
+                        key={product.id}
+                        className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="min-w-0 break-words text-base font-bold leading-tight text-black dark:text-white">
+                            {product.nombre}
+                          </p>
+                          <div className="flex shrink-0 gap-1.5">
+                            <button
+                              type="button"
+                              aria-label={`Editar ${product.nombre}`}
+                              onClick={() => openEditDialog(product)}
+                              className="flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-300 text-black transition active:scale-90 dark:border-zinc-700 dark:text-white"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Eliminar ${product.nombre}`}
+                              onClick={() => openDeleteDialog(product)}
+                              className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600 text-white transition active:scale-90 dark:bg-red-500"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          <PriceField
+                            label="Menudeo"
+                            value={product.precioMenudeo}
+                            onChange={(v) =>
+                              updatePrice(product.id, "precioMenudeo", v)
+                            }
+                          />
+                          <PriceField
+                            label="Mayoreo"
+                            value={product.precioMayoreo}
+                            onChange={(v) =>
+                              updatePrice(product.id, "precioMayoreo", v)
+                            }
+                          />
+                          <PriceField
+                            label="Producción"
+                            value={product.precioProduccion}
+                            onChange={(v) =>
+                              updatePrice(product.id, "precioProduccion", v)
+                            }
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="hidden overflow-x-auto sm:block">
+                    <table className="w-full">
                       <thead>
                         <tr className="border-b border-black dark:border-white">
                           <th className="text-left py-2 px-2 sm:py-3 sm:px-4 font-semibold text-black dark:text-white text-xs sm:text-sm">
@@ -757,7 +854,7 @@ export default function PreciosPage() {
                         nombre: e.target.value,
                       })
                     }
-                    className="w-full mt-1 px-2 py-2 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm sm:text-base"
+                    className="w-full mt-1 h-11 px-3 sm:h-auto sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-base"
                   />
                 </div>
 
@@ -787,76 +884,50 @@ export default function PreciosPage() {
                   </Select>
                 </div>
 
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold">
-                    Precio Menudeo:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                <div className="grid grid-cols-3 gap-2">
+                  <PriceField
+                    label="Menudeo"
                     value={selectedProduct.precioMenudeo}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setSelectedProduct({
                         ...selectedProduct,
-                        precioMenudeo: parseFloat(e.target.value) || 0,
+                        precioMenudeo: parseFloat(v) || 0,
                       })
                     }
-                    className="w-full mt-1 px-2 py-2 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm sm:text-base"
                   />
-                </div>
-
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold">
-                    Precio Mayoreo:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <PriceField
+                    label="Mayoreo"
                     value={selectedProduct.precioMayoreo}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setSelectedProduct({
                         ...selectedProduct,
-                        precioMayoreo: parseFloat(e.target.value) || 0,
+                        precioMayoreo: parseFloat(v) || 0,
                       })
                     }
-                    className="w-full mt-1 px-2 py-2 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm sm:text-base"
                   />
-                </div>
-
-                <div>
-                  <label className="text-xs sm:text-sm font-semibold">
-                    Precio Producción:
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <PriceField
+                    label="Producción"
                     value={selectedProduct.precioProduccion}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setSelectedProduct({
                         ...selectedProduct,
-                        precioProduccion: parseFloat(e.target.value) || 0,
+                        precioProduccion: parseFloat(v) || 0,
                       })
                     }
-                    className="w-full mt-1 px-2 py-2 sm:px-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm sm:text-base"
                   />
                 </div>
 
-                <div className="flex gap-2 justify-end pt-2">
+                <div className="grid grid-cols-2 gap-2 pt-2 sm:flex sm:justify-end">
                   <Button
                     variant="outline"
                     onClick={() => setIsEditDialogOpen(false)}
-                    size="sm"
-                    className="text-xs sm:text-sm"
+                    className="h-11 text-base sm:h-8 sm:text-sm"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={handleEditProduct}
-                    size="sm"
-                    className="text-xs sm:text-sm"
+                    className="h-11 text-base sm:h-8 sm:text-sm"
                   >
                     Guardar
                   </Button>

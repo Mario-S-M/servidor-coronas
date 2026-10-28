@@ -39,9 +39,21 @@ const SINGULAR: Record<string, string> = {
   ramos: "Ramo",
 };
 
-/** "Coronas" + "Grande" -> "Corona Grande" (en la base solo dice "Grande"). */
+/**
+ * "Coronas" + "Grande" -> "Corona Grande" (en la base solo dice "Grande").
+ * Si el nombre ya empieza con la categoría ("Arco Mediano", "Arcos Grande")
+ * no se repite: "Arco Mediano", "Arco Grande".
+ */
 export function productLabel(categoria: string, nombre: string) {
   const base = SINGULAR[categoria.toLowerCase()] ?? categoria;
+  const prefixes = [base, categoria].map((p) => p.toLowerCase());
+  const [first, ...rest] = nombre.trim().split(/\s+/);
+  if (rest.length > 0 && prefixes.includes(first.toLowerCase())) {
+    return `${base} ${rest.join(" ")}`;
+  }
+  if (rest.length === 0 && prefixes.includes(first.toLowerCase())) {
+    return base;
+  }
   return `${base} ${nombre}`;
 }
 
