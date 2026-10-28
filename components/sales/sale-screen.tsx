@@ -164,7 +164,7 @@ export function SaleScreen({
                     )}
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-base font-bold leading-tight text-black dark:text-white">
+                      <p className="break-words text-base font-bold leading-tight text-black dark:text-white">
                         {productLabel(p.categoria, p.nombre)}
                       </p>
                       <p className="mt-0.5 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
