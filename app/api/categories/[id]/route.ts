@@ -29,13 +29,25 @@ async function handlePUT(
       }
     }
 
-    const category = await prisma.category.update({
-      where: { id },
-      data: {
-        ...(nombre !== undefined && { nombre }),
-        ...(orden !== undefined && { orden }),
-        ...(activo !== undefined && { activo }),
-      },
+    // Los productos guardan la categoría por nombre: al renombrarla se actualizan juntos,
+    // si no quedarían apuntando al nombre viejo
+    const category = await prisma.$transaction(async (tx) => {
+      const previous = await tx.category.findUnique({ where: { id } });
+      const updated = await tx.category.update({
+        where: { id },
+        data: {
+          ...(nombre !== undefined && { nombre }),
+          ...(orden !== undefined && { orden }),
+          ...(activo !== undefined && { activo }),
+        },
+      });
+      if (previous && nombre && previous.nombre !== nombre) {
+        await tx.product.updateMany({
+          where: { categoria: previous.nombre },
+          data: { categoria: nombre },
+        });
+      }
+      return updated;
     });
 
     return NextResponse.json(category);

@@ -40,6 +40,12 @@ interface ProductsByCategory {
   [key: string]: Product[];
 }
 
+/** Mensaje de error que devuelve la API (p. ej. "Hay 3 producto(s) usando esta categoría"). */
+async function apiError(response: Response, fallback: string) {
+  const data = await response.json().catch(() => null);
+  return data?.error || fallback;
+}
+
 /** Campo de precio para teléfono: etiqueta arriba, letra de 16px (evita el zoom de iOS) y área grande. */
 function PriceField({
   label,
@@ -275,7 +281,7 @@ export default function PreciosPage() {
         setNewCategory({ nombre: "", orden: 0 });
         loadCategories();
       } else {
-        toast.error("Error al agregar categoría");
+        toast.error(await apiError(response, "Error al agregar categoría"));
       }
     } catch (error) {
       console.error("Error:", error);
@@ -301,7 +307,7 @@ export default function PreciosPage() {
         setEditingCategory(null);
         loadCategories();
       } else {
-        toast.error("Error al actualizar categoría");
+        toast.error(await apiError(response, "Error al actualizar categoría"));
       }
     } catch (error) {
       console.error("Error:", error);
@@ -319,7 +325,7 @@ export default function PreciosPage() {
         toast.success("Categoría eliminada correctamente");
         loadCategories();
       } else {
-        toast.error("Error al eliminar categoría");
+        toast.error(await apiError(response, "Error al eliminar categoría"));
       }
     } catch (error) {
       console.error("Error:", error);
