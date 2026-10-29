@@ -20,5 +20,5 @@ export const PEDIDO_FOOTER = [
 // Si tu impresora imprime más angosto, baja este valor (por ejemplo 42).
 export const PRINT_COLUMNS = 48;
 // Renglones en blanco antes y después del contenido, para que no quede pegado al borde ni al corte.
-export const TOP_FEED_LINES = 2;
+export const TOP_FEED_LINES = 0;
 export const BOTTOM_FEED_LINES = 5;

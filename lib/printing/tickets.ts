@@ -204,6 +204,26 @@ export function linesToEscPos(lines: TicketLine[]): Uint8Array {
   return b.align("left").bold(false).feed(BOTTOM_FEED_LINES).cut().build();
 }
 
+/** Una copia por etiqueta (p. ej. negocio y cliente); cada una lleva su propio corte. */
+export function ticketCopies(lines: TicketLine[], labels: string[]): TicketLine[][] {
+  return labels.map((label) => [
+    ...lines,
+    { kind: "rule", char: "-" },
+    { kind: "text", text: label, align: "center", bold: true },
+  ]);
+}
+
+export function copiesToEscPos(copies: TicketLine[][]): Uint8Array {
+  const parts = copies.map(linesToEscPos);
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let offset = 0;
+  for (const p of parts) {
+    out.set(p, offset);
+    offset += p.length;
+  }
+  return out;
+}
+
 export const buildSaleTicket = (sale: SaleTicketData) =>
   linesToEscPos(saleTicketLines(sale));
 

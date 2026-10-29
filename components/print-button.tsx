@@ -5,17 +5,24 @@ import { Bluetooth, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  PrinterChooserCancelled,
   getSavedPrinterName,
   isBluetoothSupported,
   printBytes,
 } from "@/lib/printing/bluetooth-printer";
 import { printWithBrowser } from "@/lib/printing/browser-print";
-import { linesToEscPos, type TicketLine } from "@/lib/printing/tickets";
+import {
+  copiesToEscPos,
+  ticketCopies,
+  type TicketLine,
+} from "@/lib/printing/tickets";
 
 interface PrintButtonProps {
   /** Líneas del ticket a imprimir. */
   lines: TicketLine[] | null;
   label?: string;
+  /** Etiquetas de las copias a imprimir, cada una con su corte (por defecto una sola). */
+  copies?: string[];
   className?: string;
 }
 
@@ -25,6 +32,7 @@ const base =
 export function PrintButton({
   lines,
   label = "Imprimir ticket",
+  copies,
   className,
 }: PrintButtonProps) {
   const [busy, setBusy] = useState(false);
@@ -36,16 +44,19 @@ export function PrintButton({
     setPrinterName(getSavedPrinterName());
   }, []);
 
+  const pages = (): TicketLine[][] =>
+    copies?.length ? ticketCopies(lines ?? [], copies) : [lines ?? []];
+
   const printBluetooth = async (chooseNew: boolean) => {
     if (!lines) return;
     setBusy(true);
     try {
-      const name = await printBytes(linesToEscPos(lines), { chooseNew });
+      const name = await printBytes(copiesToEscPos(pages()), { chooseNew });
       setPrinterName(name);
       toast.success(`Ticket enviado a ${name}`);
     } catch (error) {
       // Cancelar el selector de dispositivos no es un error
-      if (error instanceof DOMException && error.name === "NotFoundError") return;
+      if (error instanceof PrinterChooserCancelled) return;
       toast.error("No se pudo imprimir", {
         description:
           error instanceof Error ? error.message : "Error desconocido",
@@ -58,7 +69,7 @@ export function PrintButton({
   const printFallback = () => {
     if (!lines) return;
     try {
-      printWithBrowser(lines);
+      printWithBrowser(pages().flatMap((p) => [...p, { kind: "text", text: "" } as TicketLine]));
     } catch (error) {
       toast.error("No se pudo imprimir", {
         description:

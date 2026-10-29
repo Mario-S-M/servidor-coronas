@@ -315,6 +315,7 @@ export function LayawayDetail({
         <div className="border-t border-zinc-200 bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 dark:border-zinc-800 dark:bg-black">
           <PrintButton
             lines={layawayTicketLines(layawayToTicketData(l))}
+            copies={["COPIA NEGOCIO", "COPIA CLIENTE"]}
             label="Imprimir ticket"
           />
         </div>
